@@ -1,4 +1,4 @@
-# rpt
+# rptcam
 
 [![Latest Version](https://img.shields.io/crates/v/rpt.svg)](https://crates.io/crates/rpt)
 [![API Documentation](https://docs.rs/rpt/badge.svg)](https://docs.rs/rpt)

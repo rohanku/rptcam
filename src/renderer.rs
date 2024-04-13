@@ -3,13 +3,14 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
 
 use crate::buffer::{Buffer, Filter};
-use crate::camera::Camera;
+use crate::camera::ThinLensCamera;
 use crate::color::Color;
 use crate::light::Light;
 use crate::material::Material;
 use crate::object::Object;
 use crate::scene::Scene;
 use crate::shape::{HitRecord, Ray};
+use crate::Camera;
 
 const EPSILON: f64 = 1e-12;
 const FIREFLY_CLAMP: f64 = 100.0;
@@ -20,7 +21,7 @@ pub struct Renderer<'a> {
     pub scene: &'a Scene,
 
     /// The camera to use
-    pub camera: Camera,
+    pub camera: ThinLensCamera,
 
     /// The width of the output image
     pub width: u32,
@@ -43,7 +44,7 @@ pub struct Renderer<'a> {
 
 impl<'a> Renderer<'a> {
     /// Construct a new renderer for a scene
-    pub fn new(scene: &'a Scene, camera: Camera) -> Self {
+    pub fn new(scene: &'a Scene, camera: ThinLensCamera) -> Self {
         Self {
             scene,
             camera,

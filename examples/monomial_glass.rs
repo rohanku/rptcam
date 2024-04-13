@@ -77,7 +77,7 @@ fn main() -> color_eyre::Result<()> {
     ));
      */
 
-    Renderer::new(&scene, Camera::default())
+    Renderer::new(&scene, ThinLensCamera::default())
         .width(800)
         .height(600)
         .max_bounces(1)

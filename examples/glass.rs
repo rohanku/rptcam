@@ -40,7 +40,7 @@ fn main() -> color_eyre::Result<()> {
             .material(Material::clear(1.5, 0.0001)),
     );
 
-    Renderer::new(&scene, Camera::default())
+    Renderer::new(&scene, ThinLensCamera::default())
         .width(1200)
         .height(900)
         .max_bounces(5)

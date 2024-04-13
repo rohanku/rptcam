@@ -17,7 +17,7 @@ fn main() {
         .material(Material::light(hex_color(0xFFFFFF), 40.0)),
     ));
 
-    let camera = Camera::look_at(
+    let camera = ThinLensCamera::look_at(
         glm::vec3(-2.5, 4.0, 6.5),
         glm::vec3(0.0, -0.25, 0.0),
         glm::vec3(0.0, 1.0, 0.0),

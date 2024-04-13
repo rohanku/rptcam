@@ -52,7 +52,7 @@ fn main() -> color_eyre::Result<()> {
         .material(Material::metallic(hex_color(0xffffff), 0.0001)),
     );
 
-    Renderer::new(&scene, Camera::default())
+    Renderer::new(&scene, ThinLensCamera::default())
         .width(1200)
         .height(900)
         .max_bounces(5)

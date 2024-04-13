@@ -42,7 +42,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 5.0, 5.0),
     ));
 
-    Renderer::new(&scene, Camera::default())
+    Renderer::new(&scene, ThinLensCamera::default())
         .width(800)
         .height(600)
         .render()
