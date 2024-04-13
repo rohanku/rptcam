@@ -1,10 +1,11 @@
 use rand::{rngs::StdRng, Rng};
+use rand::distributions::Uniform;
 use rand_distr::UnitDisc;
 
 use crate::shape::Ray;
 
 /// A simple thin-lens perspective camera
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Camera {
     /// Location of the camera
     pub eye: glm::DVec3,
@@ -18,11 +19,41 @@ pub struct Camera {
     /// Field of view in the longer direction as an angle in radians, in (0, pi)
     pub fov: f64,
 
-    /// Aperture radius for depth-of-field effects
-    pub aperture: f64,
+    /// The camera aperture size and shape
+    pub aperture: Option<Aperture>,
+}
 
-    /// Focal distance, if aperture radius is nonzero
+#[derive(Clone, Debug)]
+pub struct Aperture {
+    /// Aperture radius for depth-of-field effects
+    pub scale: f64,
+
+    /// Focal distance
     pub focal_distance: f64,
+
+    /// The shape of the aperture
+    pub shape: ApertureShape,
+}
+
+#[derive(Clone, Debug)]
+pub enum ApertureShape {
+    /// A circular aperture.
+    ///
+    /// Represents a circle centered at (0, 0) with radius 1.
+    Circle,
+    /// A square aperture.
+    ///
+    /// Equivalent to a 4-point polygon aperture with points at (+/- 1, +/- 1).
+    Square,
+    /// An aperture with an arbitrary polygon shape.
+    ///
+    /// The points of the polygon must lie within a [-1, 1] box.
+    Poly(Polygon),
+}
+
+#[derive(Clone, Debug)]
+pub struct Polygon {
+    pts: Vec<[f64; 2]>,
 }
 
 impl Default for Camera {
@@ -32,8 +63,7 @@ impl Default for Camera {
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
             fov: std::f64::consts::FRAC_PI_6,
-            aperture: 0.0,
-            focal_distance: 0.0,
+            aperture: None,
         }
     }
 }
@@ -48,15 +78,18 @@ impl Camera {
             direction,
             up,
             fov,
-            aperture: 0.0,
-            focal_distance: 0.0,
+            aperture: None,
         }
     }
 
     /// Focus the camera on a position, with simulated depth-of-field
     pub fn focus(mut self, focal_point: glm::DVec3, aperture: f64) -> Self {
-        self.focal_distance = (focal_point - self.eye).dot(&self.direction);
-        self.aperture = aperture;
+        let focal_distance = (focal_point - self.eye).dot(&self.direction);
+        self.aperture = Some(Aperture {
+            scale: aperture,
+            focal_distance,
+            shape: ApertureShape::Circle,
+        });
         self
     }
 
@@ -67,16 +100,49 @@ impl Camera {
         let right = glm::cross(&self.direction, &self.up).normalize();
         let mut origin = self.eye;
         let mut new_dir = d * self.direction + x * right + y * self.up;
-        if self.aperture > 0.0 {
+        if let Some(ref aperture) = self.aperture {
             // Depth of field
-            let focal_point = origin + new_dir.normalize() * self.focal_distance;
-            let [x, y]: [f64; 2] = rng.sample(UnitDisc);
-            origin += (x * right + y * self.up) * self.aperture;
+            let focal_point = origin + new_dir.normalize() * aperture.focal_distance;
+            let [x, y]: [f64; 2] = aperture.shape.sample(rng);
+            origin += (x * right + y * self.up) * aperture.scale;
             new_dir = focal_point - origin;
         }
         Ray {
             origin,
             dir: new_dir.normalize(),
         }
+    }
+}
+
+impl ApertureShape {
+    fn sample(&self, rng: &mut StdRng) -> [f64; 2] {
+        match self {
+            ApertureShape::Circle => {
+                rng.sample(UnitDisc)
+            }
+            ApertureShape::Square => {
+                let uniform = Uniform::new_inclusive(-1.0, 1.0);
+                let x = rng.sample(uniform);
+                let y = rng.sample(uniform);
+                [x, y]
+            }
+            ApertureShape::Poly(ref poly) => {
+                let uniform = Uniform::new_inclusive(-1.0, 1.0);
+                loop {
+                    let x = rng.sample(uniform);
+                    let y = rng.sample(uniform);
+
+                    if poly.contains(x, y) {
+                        break [x, y];
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl Polygon {
+    pub fn contains(&self, x: f64, y: f64) -> bool {
+        todo!()
     }
 }
