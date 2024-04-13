@@ -1,6 +1,7 @@
 use image::RgbImage;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
+use std::sync::Arc;
 
 use crate::buffer::{Buffer, Filter};
 use crate::camera::ThinLensCamera;
@@ -21,7 +22,7 @@ pub struct Renderer<'a> {
     pub scene: &'a Scene,
 
     /// The camera to use
-    pub camera: ThinLensCamera,
+    pub camera: Arc<dyn Camera>,
 
     /// The width of the output image
     pub width: u32,
@@ -44,7 +45,7 @@ pub struct Renderer<'a> {
 
 impl<'a> Renderer<'a> {
     /// Construct a new renderer for a scene
-    pub fn new(scene: &'a Scene, camera: ThinLensCamera) -> Self {
+    pub fn new(scene: &'a Scene, camera: Arc<dyn Camera>) -> Self {
         Self {
             scene,
             camera,
