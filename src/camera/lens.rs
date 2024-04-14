@@ -4,6 +4,7 @@
 pub const IMAGING_MEDIUM_N_D: f64 = 1.;
 
 /// An object-facing surface of a lens element within a lens system
+#[derive(Clone, Copy, Debug)]
 pub struct LensSurface {
     /// Radius of curvature (mm)
     pub radius: f64,

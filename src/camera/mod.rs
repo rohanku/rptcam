@@ -119,7 +119,7 @@ impl<L: Lens + Default> Default for PhysicalCamera<L> {
         let lens = L::default();
         let lens_system = lens.lens_system(100.);
         Self {
-            eye: glm::vec3(0.0, 0.0, 0.0),
+            eye: glm::vec3(0.0, 0.0, 10.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
             sensor_width: 4.,
@@ -154,8 +154,11 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
         loop {
             let new_p = if let Some(surface) = self.lens_system.surfaces.last() {
                 let [x, y]: [f64; 2] = rng.sample(UnitDisc);
+                let z = (surface.radius * surface.radius - x * x - y * y).sqrt();
                 self.eye
-                    + self.direction * surface.thickness
+                    + self.direction
+                        * (surface.thickness
+                            - surface.radius * (surface.radius.abs() - z) / surface.radius.abs())
                     + x * right * surface.aperture / 2.
                     + y * self.up * surface.aperture / 2.
             } else {
@@ -193,13 +196,13 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                     valid = false;
                     break;
                 }
-                let t = -b - (b * b - 4. * a * c).sqrt() / 2. / a;
+                let t = (-b - (b * b - 4. * a * c).sqrt()) / 2. / a;
                 let intersect = p + dir * t;
                 let intersect2camera = intersect - self.eye;
                 let axial_radius_squared = (intersect2camera
                     - (intersect2camera).dot(&self.direction) * self.direction)
                     .norm_squared();
-                if axial_radius_squared > surface.aperture * surface.aperture {
+                if axial_radius_squared > surface.aperture * surface.aperture / 4. {
                     println!("outside of aperture");
                     valid = false;
                     break;
