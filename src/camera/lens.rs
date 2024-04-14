@@ -59,7 +59,9 @@ impl Default for SingleLens {
 
 impl SingleLens {
     fn focal_length(&self) -> f64 {
-        (self.n_d - 1.) * (1. / self.r1 + 1. / self.r2)
+        1. / ((self.n_d - 1.)
+            * (1. / self.r1 + 1. / self.r2
+                - (self.n_d - 1.) * self.thickness / (self.n_d * self.r1 * self.r2)))
     }
 }
 
