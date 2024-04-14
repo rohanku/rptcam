@@ -119,7 +119,7 @@ impl<L: Lens + Default> Default for PhysicalCamera<L> {
         let lens = L::default();
         let lens_system = lens.lens_system(4.);
         Self {
-            eye: glm::vec3(0.0, 0.0, 10.0),
+            eye: glm::vec3(0.0, 0.0, 7.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
             sensor_width: 16.,
