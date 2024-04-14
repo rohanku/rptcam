@@ -61,7 +61,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 5.0, 5.0),
     ));
 
-    let camera = Camera {
+    let camera = ThinLensCamera {
         eye: glm::vec3(2.0, 3.5, 7.0),
         direction: glm::vec3(-0.285714, -0.5, -1.0).normalize(),
         up: glm::vec3(0.0, 1.0, -0.5).normalize(),

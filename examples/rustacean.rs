@@ -55,7 +55,7 @@ fn main() -> color_eyre::Result<()> {
         .material(Material::light(glm::vec3(1.0, 1.0, 1.0), 160.0)),
     ));
 
-    let camera = Camera::look_at(
+    let camera = ThinLensCamera::look_at(
         glm::vec3(-2.5, 4.0, 8.5),
         glm::vec3(0.0, 0.9, 0.0),
         glm::vec3(0.0, 1.0, 0.0),

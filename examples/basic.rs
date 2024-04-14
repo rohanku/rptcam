@@ -1,4 +1,6 @@
+use rpt::lens::SingleLens;
 use rpt::*;
+use std::sync::Arc;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -42,7 +44,8 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 5.0, 5.0),
     ));
 
-    Renderer::new(&scene, Camera::default())
+    Renderer::new(&scene, Arc::new(PhysicalCamera::<SingleLens>::default()))
+        .num_samples(16)
         .width(800)
         .height(600)
         .render()
