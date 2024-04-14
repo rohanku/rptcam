@@ -89,7 +89,7 @@ impl Lens for SingleLens {
                     radius: self.r1,
                     thickness: self.thickness,
                     n_d: Some(self.n_d),
-                    aperture: self.aperture * 2.,
+                    aperture: self.aperture,
                 },
                 LensSurface {
                     radius: -self.r2,
