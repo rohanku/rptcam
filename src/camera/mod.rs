@@ -117,13 +117,13 @@ pub struct PhysicalCamera<L> {
 impl<L: Lens + Default> Default for PhysicalCamera<L> {
     fn default() -> Self {
         let lens = L::default();
-        let lens_system = lens.lens_system(100.);
+        let lens_system = lens.lens_system(4.);
         Self {
             eye: glm::vec3(0.0, 0.0, 10.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
-            sensor_width: 4.,
-            sensor_height: 3.,
+            sensor_width: 16.,
+            sensor_height: 12.,
             lens,
             lens_system,
         }
@@ -148,10 +148,11 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> Ray {
         let right = glm::cross(&self.direction, &self.up).normalize();
 
-        let mut p =
-            self.eye + self.sensor_width * x / 2. * right + self.sensor_height * y / 2. * self.up;
-
         loop {
+            let mut p = self.eye
+                + self.sensor_width * x / 2. * right
+                + self.sensor_height * y / 2. * self.up;
+
             let new_p = if let Some(surface) = self.lens_system.surfaces.last() {
                 let [x, y]: [f64; 2] = rng.sample(UnitDisc);
                 let z = (surface.radius * surface.radius - x * x - y * y).sqrt();
@@ -192,18 +193,19 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                 let c = v.dot(&v) - surface.radius * surface.radius;
                 let discriminant = b * b - 4. * a * c;
                 if discriminant < 0. {
-                    println!("discriminant less than 0");
                     valid = false;
                     break;
                 }
-                let t = (-b - (b * b - 4. * a * c).sqrt()) / 2. / a;
+                let t = (-b
+                    + if surface.radius < 0. { -1. } else { 1. } * (b * b - 4. * a * c).sqrt())
+                    / 2.
+                    / a;
                 let intersect = p + dir * t;
                 let intersect2camera = intersect - self.eye;
                 let axial_radius_squared = (intersect2camera
                     - (intersect2camera).dot(&self.direction) * self.direction)
                     .norm_squared();
                 if axial_radius_squared > surface.aperture * surface.aperture / 4. {
-                    println!("outside of aperture");
                     valid = false;
                     break;
                 }

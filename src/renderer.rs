@@ -118,7 +118,7 @@ impl<'a> Renderer<'a> {
 
     fn sample(&self, iterations: u32, buffer: &mut Buffer) {
         let colors: Vec<_> = (0..self.height)
-            .into_par_iter()
+            .into_iter()
             .flat_map(|y| {
                 let mut rng = StdRng::from_entropy();
                 (0..self.width)

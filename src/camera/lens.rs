@@ -17,6 +17,7 @@ pub struct LensSurface {
 }
 
 /// A lens system
+#[derive(Clone, Debug)]
 pub struct LensSystem {
     /// Surfaces of lens elements from closest to the object to farthest from the object
     pub surfaces: Vec<LensSurface>,
@@ -35,6 +36,7 @@ pub trait Lens: Send + Sync {
     fn lens_system(&self, object_distance: f64) -> LensSystem;
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct SingleLens {
     pub r1: f64,
     pub r2: f64,
@@ -48,7 +50,7 @@ impl Default for SingleLens {
         Self {
             r1: 4.,
             r2: 4.,
-            aperture: 2.,
+            aperture: 0.1,
             thickness: 0.01,
             n_d: 1.6,
         }
@@ -85,7 +87,7 @@ impl Lens for SingleLens {
                     radius: self.r1,
                     thickness: self.thickness,
                     n_d: Some(self.n_d),
-                    aperture: self.aperture,
+                    aperture: self.aperture * 2.,
                 },
                 LensSurface {
                     radius: -self.r2,

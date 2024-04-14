@@ -45,6 +45,7 @@ fn main() -> color_eyre::Result<()> {
     ));
 
     Renderer::new(&scene, Arc::new(PhysicalCamera::<SingleLens>::default()))
+        .num_samples(16)
         .width(800)
         .height(600)
         .render()
