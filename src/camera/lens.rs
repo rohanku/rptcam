@@ -6,13 +6,13 @@ pub const IMAGING_MEDIUM_N_D: f64 = 1.;
 /// An object-facing surface of a lens element within a lens system
 #[derive(Clone, Copy, Debug)]
 pub struct LensSurface {
-    /// Radius of curvature (mm)
+    /// Radius of curvature
     pub radius: f64,
-    /// Element thickness (mm)
+    /// Element thickness
     pub thickness: f64,
-    /// Element index of refraction for sodium `d` line (587.6 nm)
+    /// Element index of refraction for sodium `d` line
     pub n_d: Option<f64>,
-    /// Aperture diameter (mm)
+    /// Aperture diameter
     pub aperture: f64,
 }
 
@@ -25,9 +25,9 @@ pub struct LensSystem {
 
 /// A lens
 pub trait Lens: Send + Sync {
-    /// The minimum distance from the image sensor that can be brought into focus (mm).
+    /// The minimum distance from the image sensor that can be brought into focus.
     fn focus_min(&self) -> Option<f64>;
-    /// The maximum distance from the image sensor that can be brought into focus (mm).
+    /// The maximum distance from the image sensor that can be brought into focus.
     fn focus_max(&self) -> Option<f64>;
 
     /// The lens system that brings an object at the given distance from the image sensor into focus.
@@ -36,12 +36,22 @@ pub trait Lens: Send + Sync {
     fn lens_system(&self, object_distance: f64) -> LensSystem;
 }
 
+/// A single lens
 #[derive(Clone, Copy, Debug)]
 pub struct SingleLens {
+    /// Outward-facing radius of curvature.
+    ///
+    /// Positive radius of curvature indicates a convex surface.
     pub r1: f64,
+    /// Inward-facing radius of curvature.
+    ///
+    /// Positive radius of curvature indicates a convex surface.
     pub r2: f64,
+    /// Aperture diameter.
     pub aperture: f64,
+    /// Thickness.
     pub thickness: f64,
+    /// Index of refraction at sodium `d` line.
     pub n_d: f64,
 }
 
@@ -58,7 +68,8 @@ impl Default for SingleLens {
 }
 
 impl SingleLens {
-    fn focal_length(&self) -> f64 {
+    /// Focal length of this [`SingleLens`]
+    pub fn focal_length(&self) -> f64 {
         1. / ((self.n_d - 1.)
             * (1. / self.r1 + 1. / self.r2
                 - (self.n_d - 1.) * self.thickness / (self.n_d * self.r1 * self.r2)))

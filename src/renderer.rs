@@ -4,7 +4,6 @@ use rayon::prelude::*;
 use std::sync::Arc;
 
 use crate::buffer::{Buffer, Filter};
-use crate::camera::ThinLensCamera;
 use crate::color::Color;
 use crate::light::Light;
 use crate::material::Material;
@@ -118,11 +117,10 @@ impl<'a> Renderer<'a> {
 
     fn sample(&self, iterations: u32, buffer: &mut Buffer) {
         let colors: Vec<_> = (0..self.height)
-            .into_iter()
+            .into_par_iter()
             .flat_map(|y| {
                 let mut rng = StdRng::from_entropy();
                 (0..self.width)
-                    .into_iter()
                     .map(|x| self.get_color(x, y, iterations, &mut rng))
                     .collect::<Vec<_>>()
             })

@@ -7,6 +7,7 @@ use rand_distr::{UnitDisc, UnitSphere};
 
 use crate::shape::Ray;
 
+/// A camera that can cast rays into the scene
 pub trait Camera: Send + Sync {
     /// Cast a ray, where (x, y) are normalized to the standard [-1, 1] box
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> Ray;
@@ -91,6 +92,7 @@ impl Camera for ThinLensCamera {
     }
 }
 
+/// A physical camera
 pub struct PhysicalCamera<L> {
     /// Location of the camera
     pub eye: glm::DVec3,
@@ -101,10 +103,10 @@ pub struct PhysicalCamera<L> {
     /// Direction of "up" for screen, must be orthogonal to `direction`
     pub up: glm::DVec3,
 
-    /// Width of image sensor (mm).
+    /// Width of image sensor.
     pub sensor_width: f64,
 
-    /// Height of image sensor (mm).
+    /// Height of image sensor.
     pub sensor_height: f64,
 
     /// Lens.
@@ -114,6 +116,7 @@ pub struct PhysicalCamera<L> {
     pub lens_system: LensSystem,
 }
 
+/// A physical camera
 impl<L: Lens + Default> Default for PhysicalCamera<L> {
     fn default() -> Self {
         let lens = L::default();
@@ -131,13 +134,15 @@ impl<L: Lens + Default> Default for PhysicalCamera<L> {
 }
 
 impl<L: Lens> PhysicalCamera<L> {
-    fn look_at(&mut self, eye: glm::DVec3, center: glm::DVec3, up: glm::DVec3) {
+    /// Points the camera in the given direction.
+    pub fn look_at(&mut self, eye: glm::DVec3, center: glm::DVec3, up: glm::DVec3) {
         self.eye = eye;
         self.direction = (center - eye).normalize();
         self.up = (up - up.dot(&self.direction) * self.direction).normalize();
     }
 
-    fn focus(&mut self, focal_point: glm::DVec3) {
+    /// Focuses the camera on the given point.
+    pub fn focus(&mut self, focal_point: glm::DVec3) {
         self.lens_system = self
             .lens
             .lens_system((focal_point - self.eye).dot(&self.direction).abs());
