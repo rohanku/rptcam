@@ -117,9 +117,9 @@ pub struct PhysicalCamera<L> {
 impl<L: Lens + Default> Default for PhysicalCamera<L> {
     fn default() -> Self {
         let lens = L::default();
-        let lens_system = lens.lens_system(0.0);
+        let lens_system = lens.lens_system(100.);
         Self {
-            eye: glm::vec3(0.0, 0.0, 10.0),
+            eye: glm::vec3(0.0, 0.0, 0.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
             sensor_width: 4.,
@@ -149,7 +149,7 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
         let right = glm::cross(&self.direction, &self.up).normalize();
 
         let mut p =
-            self.eye + self.sensor_width * x / 2. * right + self.sensor_height * x / 2. * self.up;
+            self.eye + self.sensor_width * x / 2. * right + self.sensor_height * y / 2. * self.up;
 
         loop {
             let new_p = if let Some(surface) = self.lens_system.surfaces.last() {
@@ -200,7 +200,7 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                     - (intersect2camera).dot(&self.direction) * self.direction)
                     .norm_squared();
                 if axial_radius_squared > surface.aperture * surface.aperture {
-                    println!("Outside of aperture");
+                    println!("outside of aperture");
                     valid = false;
                     break;
                 }

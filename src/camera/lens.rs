@@ -45,10 +45,10 @@ pub struct SingleLens {
 impl Default for SingleLens {
     fn default() -> Self {
         Self {
-            r1: 60.,
-            r2: 60.,
-            aperture: 4.,
-            thickness: 1.,
+            r1: 4.,
+            r2: 4.,
+            aperture: 2.,
+            thickness: 0.01,
             n_d: 1.6,
         }
     }
@@ -73,9 +73,9 @@ impl Lens for SingleLens {
         let c = self.focal_length();
         let discriminant = b * b - 4. * a * c;
         let image_distance = if discriminant < 0. {
-            self.thickness / 2.
+            self.thickness / 2. + 0.1
         } else {
-            (self.thickness / 2.).max((-b + discriminant.sqrt()) / 2. / a)
+            (self.thickness / 2. + 0.1).max((-b + discriminant.sqrt()) / 2. / a)
         };
 
         LensSystem {

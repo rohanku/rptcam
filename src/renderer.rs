@@ -135,7 +135,8 @@ impl<'a> Renderer<'a> {
         let xn = ((2 * x + 1) as f64 - self.width as f64) / dim;
         let yn = ((2 * (self.height - y) - 1) as f64 - self.height as f64) / dim;
         let mut color = glm::vec3(0.0, 0.0, 0.0);
-        for _ in 0..iterations {
+        for i in 0..iterations {
+            println!("{i}");
             let dx = rng.gen_range((-1.0 / dim)..(1.0 / dim));
             let dy = rng.gen_range((-1.0 / dim)..(1.0 / dim));
             color += self.trace_ray(self.camera.cast_ray(xn + dx, yn + dy, rng), 0, rng);
