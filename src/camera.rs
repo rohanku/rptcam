@@ -85,10 +85,14 @@ impl Camera {
     /// Focus the camera on a position, with simulated depth-of-field
     pub fn focus(mut self, focal_point: glm::DVec3, aperture: f64) -> Self {
         let focal_distance = (focal_point - self.eye).dot(&self.direction);
+        let polygon = Polygon {
+            pts: Vec::from([[0.0, 0.0], [0.5, 0.0], [1.0, 0.5], [1.0, 1.0]]),
+        };
         self.aperture = Some(Aperture {
             scale: aperture,
             focal_distance,
-            shape: ApertureShape::Circle,
+            shape: ApertureShape::Poly(polygon),
+            // shape: ApertureShape::Circle,
         });
         self
     }
@@ -142,7 +146,24 @@ impl ApertureShape {
 }
 
 impl Polygon {
+    /// Taken from https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
+    /// Not tested yet
     pub fn contains(&self, x: f64, y: f64) -> bool {
-        todo!()
+        let numPoints = self.pts.len();
+        let mut i = 0;
+        let mut j = numPoints - 1;
+        let mut c = false;
+        while i < numPoints {
+            let prevPoint = self.pts[j];
+            let currPoint = self.pts[i];
+            if ( ((currPoint[1]>y) != (prevPoint[1]>y)) &&
+                (x < (prevPoint[0]-currPoint[0]) * (y-currPoint[1]) / (prevPoint[1]-currPoint[1]) + currPoint[0]) ) {
+                    c = !c;
+
+            }
+            j = i;
+            i += 1;
+        }
+        return c;
     }
 }
