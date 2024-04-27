@@ -88,10 +88,13 @@ impl Camera {
         let polygon = Polygon {
             pts: Vec::from([[0.0, 0.0], [0.5, 0.0], [1.0, 0.5], [1.0, 1.0]]),
         };
+        let triangle = Polygon {pts: vec![[0.0, 1.0], [-1.0, 0.0], [1.0, 0.0]],};
+        let star = Polygon {pts: Polygon::get_star(5.0)}; // number of points
+        let heart =  Polygon {pts: Polygon::get_heart(0.05, 0.05)}; // scale <0.1
         self.aperture = Some(Aperture {
             scale: aperture,
             focal_distance,
-            shape: ApertureShape::Poly(polygon),
+            shape: ApertureShape::Poly(heart), // change shape
             // shape: ApertureShape::Circle,
         });
         self
@@ -146,8 +149,39 @@ impl ApertureShape {
 }
 
 impl Polygon {
+    pub fn get_star(n: f64) -> Vec<[f64; 2]> {
+        // https://math.stackexchange.com/questions/2135982/math-behind-creating-a-perfect-star
+        let angle = 2.0*std::f64::consts::PI/n; // angle = 2pi/n
+        let mut pts : Vec<[f64; 2]> = Vec::new();
+        for i in 0..n as i64 {
+            // outer radius
+            let a = angle*i as f64;
+            let p_x = a.cos(); // can scale
+            let p_y = a.sin();
+            pts.push([p_x, p_y]);
+            // inner radius
+            let i_a = a+std::f64::consts::PI/n;
+            let i_x = 0.5*i_a.cos(); // can scale
+            let i_y = 0.5*i_a.sin();
+            pts.push([i_x, i_y]);
+        }
+        pts
+    }
+
+    pub fn get_heart(xscale: f64, yscale: f64) -> Vec<[f64; 2]> {
+        // https://mathworld.wolfram.com/HeartCurve.html
+        let mut pts : Vec<[f64; 2]> = Vec::new();
+        for t in (-180..180).step_by(10) {
+            let t = t as f64*std::f64::consts::PI/180.;
+            let x = (16. * t.sin().powi(3)) as f64;
+            let y = (13. * t.cos() - 5.*(2.*t).cos() - 2.*(3.*t).cos() - (4.*t).cos()) as f64;
+            pts.push([x*xscale,y*yscale]);   
+        }
+        // println!("{:?}", pts);
+        pts
+    }
+    
     /// Taken from https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
-    /// Not tested yet
     pub fn contains(&self, x: f64, y: f64) -> bool {
         let numPoints = self.pts.len();
         let mut i = 0;
