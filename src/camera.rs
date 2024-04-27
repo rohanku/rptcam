@@ -23,6 +23,7 @@ pub struct Camera {
     pub aperture: Option<Aperture>,
 }
 
+/// A simple aperture of various shape
 #[derive(Clone, Debug)]
 pub struct Aperture {
     /// Aperture radius for depth-of-field effects
@@ -35,6 +36,7 @@ pub struct Aperture {
     pub shape: ApertureShape,
 }
 
+/// Various shape options for aperture
 #[derive(Clone, Debug)]
 pub enum ApertureShape {
     /// A circular aperture.
@@ -51,6 +53,7 @@ pub enum ApertureShape {
     Poly(Polygon),
 }
 
+/// Polygon composed of points
 #[derive(Clone, Debug)]
 pub struct Polygon {
     pts: Vec<[f64; 2]>,
@@ -85,16 +88,16 @@ impl Camera {
     /// Focus the camera on a position, with simulated depth-of-field
     pub fn focus(mut self, focal_point: glm::DVec3, aperture: f64) -> Self {
         let focal_distance = (focal_point - self.eye).dot(&self.direction);
-        let polygon = Polygon {
+        let _polygon = Polygon {
             pts: Vec::from([[0.0, 0.0], [0.5, 0.0], [1.0, 0.5], [1.0, 1.0]]),
         };
-        let triangle = Polygon {pts: vec![[0.0, 1.0], [-1.0, 0.0], [1.0, 0.0]],};
-        let star = Polygon {pts: Polygon::get_star(5.0)}; // number of points
-        let heart =  Polygon {pts: Polygon::get_heart(0.05, 0.05)}; // scale <0.1
+        let _triangle = Polygon {pts: vec![[0.0, 1.0], [-1.0, 0.0], [1.0, 0.0]],};
+        let _star = Polygon {pts: Polygon::get_star(5.0)}; // number of points
+        let _heart =  Polygon {pts: Polygon::get_heart(0.05, 0.05)}; // scale <0.1
         self.aperture = Some(Aperture {
             scale: aperture,
             focal_distance,
-            shape: ApertureShape::Poly(heart), // change shape
+            shape: ApertureShape::Poly(_star), // change shape
             // shape: ApertureShape::Circle,
         });
         self
@@ -149,6 +152,7 @@ impl ApertureShape {
 }
 
 impl Polygon {
+    /// Generate points for a star with n points
     pub fn get_star(n: f64) -> Vec<[f64; 2]> {
         // https://math.stackexchange.com/questions/2135982/math-behind-creating-a-perfect-star
         let angle = 2.0*std::f64::consts::PI/n; // angle = 2pi/n
@@ -167,7 +171,7 @@ impl Polygon {
         }
         pts
     }
-
+    /// Generate points for a heart scaled by xscale and yscale
     pub fn get_heart(xscale: f64, yscale: f64) -> Vec<[f64; 2]> {
         // https://mathworld.wolfram.com/HeartCurve.html
         let mut pts : Vec<[f64; 2]> = Vec::new();
@@ -183,15 +187,15 @@ impl Polygon {
     
     /// Taken from https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
     pub fn contains(&self, x: f64, y: f64) -> bool {
-        let numPoints = self.pts.len();
+        let num_points = self.pts.len();
         let mut i = 0;
-        let mut j = numPoints - 1;
+        let mut j = num_points - 1;
         let mut c = false;
-        while i < numPoints {
-            let prevPoint = self.pts[j];
-            let currPoint = self.pts[i];
-            if ( ((currPoint[1]>y) != (prevPoint[1]>y)) &&
-                (x < (prevPoint[0]-currPoint[0]) * (y-currPoint[1]) / (prevPoint[1]-currPoint[1]) + currPoint[0]) ) {
+        while i < num_points {
+            let prev_point = self.pts[j];
+            let curr_point = self.pts[i];
+            if ((curr_point[1]>y) != (prev_point[1]>y)) &&
+                (x < (prev_point[0]-curr_point[0]) * (y-curr_point[1]) / (prev_point[1]-curr_point[1]) + curr_point[0]) {
                     c = !c;
 
             }
