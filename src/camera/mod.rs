@@ -122,11 +122,11 @@ impl<L: Lens + Default> Default for PhysicalCamera<L> {
         let lens = L::default();
         let lens_system = lens.lens_system(4.);
         Self {
-            eye: glm::vec3(0.0, 0.0, 7.0),
+            eye: glm::vec3(0.0, -0.5, 7.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
-            sensor_width: 16.,
-            sensor_height: 12.,
+            sensor_width: 8.,
+            sensor_height: 6.,
             lens,
             lens_system,
         }
@@ -160,13 +160,15 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
 
             let new_p = if let Some(surface) = self.lens_system.surfaces.last() {
                 let [x, y]: [f64; 2] = rng.sample(UnitDisc);
+                let x = x * surface.aperture / 2.;
+                let y = y * surface.aperture / 2.;
                 let z = (surface.radius * surface.radius - x * x - y * y).sqrt();
                 self.eye
                     + self.direction
                         * (surface.thickness
                             - surface.radius * (surface.radius.abs() - z) / surface.radius.abs())
-                    + x * right * surface.aperture / 2.
-                    + y * self.up * surface.aperture / 2.
+                    + x * right
+                    + y * self.up
             } else {
                 let [x, y, z]: [f64; 3] = rng.sample(UnitSphere);
                 return Ray {

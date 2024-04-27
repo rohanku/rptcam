@@ -60,9 +60,9 @@ impl Default for SingleLens {
         Self {
             r1: 4.,
             r2: 4.,
-            aperture: 0.1,
+            aperture: 0.07,
             thickness: 0.01,
-            n_d: 1.6,
+            n_d: 1.8,
         }
     }
 }
