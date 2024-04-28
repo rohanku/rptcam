@@ -1,5 +1,7 @@
 //!
 
+use crate::{Aperture, ApertureShape};
+
 /// Refractive index of imaging medium.
 pub const IMAGING_MEDIUM_N_D: f64 = 1.;
 
@@ -8,16 +10,16 @@ pub const WAVELENGTH_F_LINE: f64 = 486.1e-9;
 pub const WAVELENGTH_C_LINE: f64 = 656.3e-9;
 
 /// An object-facing surface of a lens element within a lens system
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct LensSurface {
     /// Radius of curvature
     pub radius: f64,
     /// Element thickness
     pub thickness: f64,
+    /// Aperture
+    pub aperture: Aperture,
     /// Element index of refraction for sodium `d` line
     pub n_d: Option<f64>,
-    /// Aperture diameter
-    pub aperture: f64,
     /// V number, characterizing dispersion.
     pub v_no: f64,
 }
@@ -43,7 +45,7 @@ pub trait Lens: Send + Sync {
 }
 
 /// A single lens
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct SingleLens {
     /// Outward-facing radius of curvature.
     ///
@@ -53,8 +55,8 @@ pub struct SingleLens {
     ///
     /// Positive radius of curvature indicates a convex surface.
     pub r2: f64,
-    /// Aperture diameter.
-    pub aperture: f64,
+    /// Aperture
+    pub aperture: Aperture,
     /// Thickness.
     pub thickness: f64,
     /// Index of refraction at sodium `d` line.
@@ -68,7 +70,10 @@ impl Default for SingleLens {
         Self {
             r1: 4.,
             r2: 4.,
-            aperture: 0.07,
+            aperture: Aperture {
+                scale: 0.035,
+                shape: ApertureShape::Circle,
+            },
             thickness: 0.01,
             n_d: 1.8,
             v_no: 1.,
@@ -90,17 +95,27 @@ impl Lens for SingleLens {
         None
     }
     fn focus_min(&self) -> Option<f64> {
-        Some((2. * self.focal_length()).sqrt())
+        Some(4. * self.focal_length())
     }
     fn lens_system(&self, object_distance: f64) -> LensSystem {
+        let object_distance = object_distance.max(4. * self.focal_length());
         let a = 1.;
         let b = -object_distance;
-        let c = self.focal_length();
+        let c = self.focal_length() * object_distance;
         let discriminant = b * b - 4. * a * c;
+        let min_distance = self.thickness / 2. + 0.2;
         let image_distance = if discriminant < 0. {
-            self.thickness / 2. + 0.1
+            min_distance
         } else {
-            (self.thickness / 2. + 0.1).max((-b + discriminant.sqrt()) / 2. / a)
+            let opt1 = (-b - discriminant.sqrt()) / 2. / a;
+            let opt2 = (-b + discriminant.sqrt()) / 2. / a;
+            if opt1 > min_distance {
+                opt1
+            } else if opt2 > min_distance {
+                opt2
+            } else {
+                min_distance
+            }
         };
 
         LensSystem {
@@ -108,15 +123,15 @@ impl Lens for SingleLens {
                 LensSurface {
                     radius: self.r1,
                     thickness: self.thickness,
+                    aperture: self.aperture.clone(),
                     n_d: Some(self.n_d),
-                    aperture: self.aperture,
                     v_no: self.v_no,
                 },
                 LensSurface {
                     radius: -self.r2,
                     thickness: image_distance - self.thickness / 2.,
+                    aperture: self.aperture.clone(),
                     n_d: None,
-                    aperture: self.aperture,
                     v_no: 0.0,
                 },
             ],

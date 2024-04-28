@@ -3,6 +3,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use rpt::lens::{Lens, SingleLens};
 use rpt::*;
 
 fn main() -> color_eyre::Result<()> {
@@ -44,20 +45,30 @@ fn main() -> color_eyre::Result<()> {
         .material(light_mtl),
     ));
 
-    let camera = ThinLensCamera::look_at(
-        glm::vec3(0.7166, -9.2992, 2.8803),
+    let lens = SingleLens {
+        aperture: Aperture {
+            scale: 0.5,
+            shape: ApertureShape::Poly(Polygon::get_heart(0.05, 0.05)),
+        },
+        ..Default::default()
+    };
+    let lens_system = lens.lens_system(10.);
+    let mut camera = PhysicalCamera {
+        eye: Default::default(),
+        direction: Default::default(),
+        up: Default::default(),
+        sensor_width: 4.,
+        sensor_height: 3.,
+        lens,
+        lens_system,
+    };
+
+    camera.look_at(
+        glm::vec3(0.7166, -12.2992, 2.8803),
         glm::vec3(0.8673, 0.2095, 0.9557),
         glm::vec3(0.0, 0.0, 1.0),
-        0.6911,
-    )
-    .focus(
-        glm::vec3(0.1, -2.0, 0.6),
-        Some(Aperture {
-            scale: 0.50,
-            focal_distance: 0.,
-            shape: ApertureShape::Poly(Polygon::get_heart(0.05, 0.05)),
-        }),
     );
+    camera.focus(glm::vec3(0.1, -2.0, 0.6));
 
     let mut time = Instant::now();
     Renderer::new(&scene, Arc::new(camera))

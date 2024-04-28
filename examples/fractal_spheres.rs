@@ -1,4 +1,5 @@
 use rpt::*;
+use std::sync::Arc;
 
 fn gen(
     spheres: &mut [Vec<Box<dyn Bounded>>],
@@ -68,7 +69,7 @@ fn main() -> color_eyre::Result<()> {
         fov: std::f64::consts::FRAC_PI_6,
         ..Default::default()
     };
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(800)
         .height(600)
         .render()

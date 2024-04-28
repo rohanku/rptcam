@@ -31,6 +31,9 @@ pub struct ThinLensCamera {
     /// Field of view in the longer direction as an angle in radians, in (0, pi)
     pub fov: f64,
 
+    /// Focal distance
+    pub focal_distance: f64,
+
     /// The camera aperture size and shape
     pub aperture: Option<Aperture>,
 }
@@ -40,9 +43,6 @@ pub struct ThinLensCamera {
 pub struct Aperture {
     /// Aperture radius for depth-of-field effects
     pub scale: f64,
-
-    /// Focal distance
-    pub focal_distance: f64,
 
     /// The shape of the aperture
     pub shape: ApertureShape,
@@ -78,6 +78,7 @@ impl Default for ThinLensCamera {
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
             fov: std::f64::consts::FRAC_PI_6,
+            focal_distance: 0.0,
             aperture: None,
         }
     }
@@ -93,17 +94,15 @@ impl ThinLensCamera {
             direction,
             up,
             fov,
+            focal_distance: 0.0,
             aperture: None,
         }
     }
 
     /// Focus the camera on a position, with simulated depth-of-field
     pub fn focus(mut self, focal_point: glm::DVec3, aperture: Option<Aperture>) -> Self {
-        self.aperture = aperture.map(|mut aperture| {
-            let focal_distance = (focal_point - self.eye).dot(&self.direction);
-            aperture.focal_distance = focal_distance;
-            aperture
-        });
+        self.focal_distance = (focal_point - self.eye).dot(&self.direction);
+        self.aperture = aperture;
         self
     }
 }
@@ -117,7 +116,7 @@ impl Camera for ThinLensCamera {
         let mut new_dir = d * self.direction + x * right + y * self.up;
         if let Some(ref aperture) = self.aperture {
             // Depth of field
-            let focal_point = origin + new_dir.normalize() * aperture.focal_distance;
+            let focal_point = origin + new_dir.normalize() * self.focal_distance;
             let [x, y]: [f64; 2] = aperture.shape.sample(rng);
             origin += (x * right + y * self.up) * aperture.scale;
             new_dir = focal_point - origin;
@@ -161,13 +160,13 @@ pub struct PhysicalCamera<L> {
 impl<L: Lens + Default> Default for PhysicalCamera<L> {
     fn default() -> Self {
         let lens = L::default();
-        let lens_system = lens.lens_system(4.);
+        let lens_system = lens.lens_system(11.);
         Self {
-            eye: glm::vec3(0.0, -0.5, 7.0),
+            eye: glm::vec3(0.0, -0.5, 14.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
-            sensor_width: 8.,
-            sensor_height: 6.,
+            sensor_width: 1.6,
+            sensor_height: 1.2,
             lens,
             lens_system,
         }
@@ -217,6 +216,8 @@ impl RgbColor {
 impl<L: Lens> Camera for PhysicalCamera<L> {
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         let right = glm::cross(&self.direction, &self.up).normalize();
+        let up = glm::cross(&right, &self.direction).normalize();
+
         let color = match rng.gen_range(0..3) {
             0 => RgbColor::Red,
             1 => RgbColor::Green,
@@ -225,21 +226,20 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
         };
 
         loop {
-            let mut p = self.eye
-                + self.sensor_width * x / 2. * right
-                + self.sensor_height * y / 2. * self.up;
+            let dim = self.sensor_width.max(self.sensor_height);
+            let mut p = self.eye + dim * x / 2. * right + dim * y / 2. * up;
 
             let new_p = if let Some(surface) = self.lens_system.surfaces.last() {
-                let [x, y]: [f64; 2] = rng.sample(UnitDisc);
-                let x = x * surface.aperture / 2.;
-                let y = y * surface.aperture / 2.;
+                let [x, y]: [f64; 2] = surface.aperture.shape.sample(rng);
+                let x = x * surface.aperture.scale;
+                let y = y * surface.aperture.scale;
                 let z = (surface.radius * surface.radius - x * x - y * y).sqrt();
                 self.eye
                     + self.direction
                         * (surface.thickness
                             - surface.radius * (surface.radius.abs() - z) / surface.radius.abs())
                     + x * right
-                    + y * self.up
+                    + y * up
             } else {
                 let [x, y, z]: [f64; 3] = rng.sample(UnitSphere);
                 return (
@@ -284,10 +284,11 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                     / a;
                 let intersect = p + dir * t;
                 let intersect2camera = intersect - self.eye;
-                let axial_radius_squared = (intersect2camera
-                    - (intersect2camera).dot(&self.direction) * self.direction)
-                    .norm_squared();
-                if axial_radius_squared > surface.aperture * surface.aperture / 4. {
+                let intersect_transverse =
+                    intersect2camera - (intersect2camera).dot(&self.direction) * self.direction;
+                let intersect_y = intersect_transverse.dot(&up) / surface.aperture.scale;
+                let intersect_x = intersect_transverse.dot(&right) / surface.aperture.scale;
+                if !surface.aperture.shape.contains(intersect_x, intersect_y) {
                     valid = false;
                     break;
                 }
@@ -335,6 +336,14 @@ impl ApertureShape {
                     }
                 }
             }
+        }
+    }
+
+    fn contains(&self, x: f64, y: f64) -> bool {
+        match self {
+            ApertureShape::Circle => x * x + y * y < 1.,
+            ApertureShape::Square => x.abs() < 1. && y.abs() < 1.,
+            ApertureShape::Poly(poly) => poly.contains(x, y),
         }
     }
 }

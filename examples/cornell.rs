@@ -2,6 +2,7 @@
 //!
 //! Reference: https://www.graphics.cornell.edu/online/box/data.html
 
+use std::sync::Arc;
 use std::time::Instant;
 
 use rpt::*;
@@ -80,7 +81,7 @@ fn main() -> color_eyre::Result<()> {
     scene.add(Light::Object(Object::new(light_rect).material(light_mtl)));
 
     let mut time = Instant::now();
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(1024)
         .height(1024)
         .filter(Filter::Box(1))

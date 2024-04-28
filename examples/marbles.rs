@@ -98,13 +98,21 @@ fn main() -> color_eyre::Result<()> {
             .material(Material::diffuse(hex_color(0xAAAAAA))),
         );
 
-        let camera = ThinLensCamera::look_at(
-            glm::vec3(0.0, 1.0, 6.0),
-            glm::vec3(0.0, 1.0, 0.0),
-            glm::vec3(0.0, 1.0, 0.0),
-            std::f64::consts::FRAC_PI_4,
-        )
-        .focus(glm::vec3(0.0, 1.0, 0.0), 0.02);
+        let camera = Arc::new(
+            ThinLensCamera::look_at(
+                glm::vec3(0.0, 1.0, 6.0),
+                glm::vec3(0.0, 1.0, 0.0),
+                glm::vec3(0.0, 1.0, 0.0),
+                std::f64::consts::FRAC_PI_4,
+            )
+            .focus(
+                glm::vec3(0.0, 1.0, 0.0),
+                Some(Aperture {
+                    scale: 0.02,
+                    shape: ApertureShape::Circle,
+                }),
+            ),
+        );
 
         if TEST {
             Renderer::new(&scene, camera)
