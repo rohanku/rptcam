@@ -2,6 +2,7 @@ pub mod lens;
 
 use crate::camera::lens::{Lens, LensSystem};
 use crate::lens::IMAGING_MEDIUM_N_D;
+use rand::distributions::Uniform;
 use rand::{rngs::StdRng, Rng};
 use rand_distr::{UnitDisc, UnitSphere};
 
@@ -14,7 +15,7 @@ pub trait Camera: Send + Sync {
 }
 
 /// A simple thin-lens perspective camera
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct ThinLensCamera {
     /// Location of the camera
     pub eye: glm::DVec3,
@@ -28,11 +29,44 @@ pub struct ThinLensCamera {
     /// Field of view in the longer direction as an angle in radians, in (0, pi)
     pub fov: f64,
 
-    /// Aperture radius for depth-of-field effects
-    pub aperture: f64,
+    /// The camera aperture size and shape
+    pub aperture: Option<Aperture>,
+}
 
-    /// Focal distance, if aperture radius is nonzero
+/// A simple aperture of various shape
+#[derive(Clone, Debug)]
+pub struct Aperture {
+    /// Aperture radius for depth-of-field effects
+    pub scale: f64,
+
+    /// Focal distance
     pub focal_distance: f64,
+
+    /// The shape of the aperture
+    pub shape: ApertureShape,
+}
+
+/// Various shape options for aperture
+#[derive(Clone, Debug)]
+pub enum ApertureShape {
+    /// A circular aperture.
+    ///
+    /// Represents a circle centered at (0, 0) with radius 1.
+    Circle,
+    /// A square aperture.
+    ///
+    /// Equivalent to a 4-point polygon aperture with points at (+/- 1, +/- 1).
+    Square,
+    /// An aperture with an arbitrary polygon shape.
+    ///
+    /// The points of the polygon must lie within a [-1, 1] box.
+    Poly(Polygon),
+}
+
+/// Polygon composed of points
+#[derive(Clone, Debug)]
+pub struct Polygon {
+    pts: Vec<[f64; 2]>,
 }
 
 impl Default for ThinLensCamera {
@@ -42,8 +76,7 @@ impl Default for ThinLensCamera {
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
             fov: std::f64::consts::FRAC_PI_6,
-            aperture: 0.0,
-            focal_distance: 0.0,
+            aperture: None,
         }
     }
 }
@@ -58,15 +91,17 @@ impl ThinLensCamera {
             direction,
             up,
             fov,
-            aperture: 0.0,
-            focal_distance: 0.0,
+            aperture: None,
         }
     }
 
     /// Focus the camera on a position, with simulated depth-of-field
-    pub fn focus(mut self, focal_point: glm::DVec3, aperture: f64) -> Self {
-        self.focal_distance = (focal_point - self.eye).dot(&self.direction);
-        self.aperture = aperture;
+    pub fn focus(mut self, focal_point: glm::DVec3, aperture: Option<Aperture>) -> Self {
+        self.aperture = aperture.map(|mut aperture| {
+            let focal_distance = (focal_point - self.eye).dot(&self.direction);
+            aperture.focal_distance = focal_distance;
+            aperture
+        });
         self
     }
 }
@@ -78,11 +113,11 @@ impl Camera for ThinLensCamera {
         let right = glm::cross(&self.direction, &self.up).normalize();
         let mut origin = self.eye;
         let mut new_dir = d * self.direction + x * right + y * self.up;
-        if self.aperture > 0.0 {
+        if let Some(ref aperture) = self.aperture {
             // Depth of field
-            let focal_point = origin + new_dir.normalize() * self.focal_distance;
-            let [x, y]: [f64; 2] = rng.sample(UnitDisc);
-            origin += (x * right + y * self.up) * self.aperture;
+            let focal_point = origin + new_dir.normalize() * aperture.focal_distance;
+            let [x, y]: [f64; 2] = aperture.shape.sample(rng);
+            origin += (x * right + y * self.up) * aperture.scale;
             new_dir = focal_point - origin;
         }
         Ray {
@@ -234,5 +269,87 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                 break Ray { origin: p, dir };
             }
         }
+    }
+}
+
+impl ApertureShape {
+    fn sample(&self, rng: &mut StdRng) -> [f64; 2] {
+        match self {
+            ApertureShape::Circle => rng.sample(UnitDisc),
+            ApertureShape::Square => {
+                let uniform = Uniform::new_inclusive(-1.0, 1.0);
+                let x = rng.sample(uniform);
+                let y = rng.sample(uniform);
+                [x, y]
+            }
+            ApertureShape::Poly(ref poly) => {
+                let uniform = Uniform::new_inclusive(-1.0, 1.0);
+                loop {
+                    let x = rng.sample(uniform);
+                    let y = rng.sample(uniform);
+
+                    if poly.contains(x, y) {
+                        break [x, y];
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl Polygon {
+    /// Generate points for a star with n points
+    pub fn get_star(n: f64) -> Self {
+        // https://math.stackexchange.com/questions/2135982/math-behind-creating-a-perfect-star
+        let angle = 2.0 * std::f64::consts::PI / n; // angle = 2pi/n
+        let mut pts: Vec<[f64; 2]> = Vec::new();
+        for i in 0..n as i64 {
+            // outer radius
+            let a = angle * i as f64;
+            let p_x = a.cos(); // can scale
+            let p_y = a.sin();
+            pts.push([p_x, p_y]);
+            // inner radius
+            let i_a = a + std::f64::consts::PI / n;
+            let i_x = 0.5 * i_a.cos(); // can scale
+            let i_y = 0.5 * i_a.sin();
+            pts.push([i_x, i_y]);
+        }
+        Self { pts }
+    }
+    /// Generate points for a heart scaled by xscale and yscale
+    pub fn get_heart(xscale: f64, yscale: f64) -> Self {
+        // https://mathworld.wolfram.com/HeartCurve.html
+        let mut pts: Vec<[f64; 2]> = Vec::new();
+        for t in (-180..180).step_by(10) {
+            let t = t as f64 * std::f64::consts::PI / 180.;
+            let x = 16. * t.sin().powi(3);
+            let y = 13. * t.cos() - 5. * (2. * t).cos() - 2. * (3. * t).cos() - (4. * t).cos();
+            pts.push([x * xscale, y * yscale]);
+        }
+        Self { pts }
+    }
+
+    /// Taken from https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
+    pub fn contains(&self, x: f64, y: f64) -> bool {
+        let num_points = self.pts.len();
+        let mut i = 0;
+        let mut j = num_points - 1;
+        let mut c = false;
+        while i < num_points {
+            let prev_point = self.pts[j];
+            let curr_point = self.pts[i];
+            if ((curr_point[1] > y) != (prev_point[1] > y))
+                && (x
+                    < (prev_point[0] - curr_point[0]) * (y - curr_point[1])
+                        / (prev_point[1] - curr_point[1])
+                        + curr_point[0])
+            {
+                c = !c;
+            }
+            j = i;
+            i += 1;
+        }
+        c
     }
 }
