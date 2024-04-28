@@ -2,6 +2,8 @@ pub mod lens;
 
 use crate::camera::lens::{Lens, LensSystem};
 use crate::lens::IMAGING_MEDIUM_N_D;
+use crate::Color;
+use glm::vec3;
 use rand::distributions::Uniform;
 use rand::{rngs::StdRng, Rng};
 use rand_distr::{UnitDisc, UnitSphere};
@@ -11,7 +13,7 @@ use crate::shape::Ray;
 /// A camera that can cast rays into the scene
 pub trait Camera: Send + Sync {
     /// Cast a ray, where (x, y) are normalized to the standard [-1, 1] box
-    fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> Ray;
+    fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64);
 }
 
 /// A simple thin-lens perspective camera
@@ -106,7 +108,7 @@ impl ThinLensCamera {
 }
 
 impl Camera for ThinLensCamera {
-    fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> Ray {
+    fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         // cot(f / 2) = depth / radius
         let d = (self.fov / 2.0).tan().recip();
         let right = glm::cross(&self.direction, &self.up).normalize();
@@ -119,10 +121,14 @@ impl Camera for ThinLensCamera {
             origin += (x * right + y * self.up) * aperture.scale;
             new_dir = focal_point - origin;
         }
-        Ray {
-            origin,
-            dir: new_dir.normalize(),
-        }
+        (
+            Ray {
+                origin,
+                dir: new_dir.normalize(),
+            },
+            vec3(1., 1., 1.),
+            1.,
+        )
     }
 }
 
@@ -183,10 +189,41 @@ impl<L: Lens> PhysicalCamera<L> {
     }
 }
 
+enum RgbColor {
+    Red,
+    Green,
+    Blue,
+}
+
+impl RgbColor {
+    pub fn wavelength(&self) -> f64 {
+        match self {
+            RgbColor::Red => 656.3e-9,
+            RgbColor::Green => 537.7e-9,
+            RgbColor::Blue => 486.1e-9,
+        }
+    }
+
+    pub fn as_vec(&self) -> Color {
+        match self {
+            RgbColor::Red => vec3(1., 0., 0.),
+            RgbColor::Green => vec3(0., 1., 0.),
+            RgbColor::Blue => vec3(0., 0., 1.),
+        }
+    }
+}
+
 impl<L: Lens> Camera for PhysicalCamera<L> {
-    fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> Ray {
+    fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         let right = glm::cross(&self.direction, &self.up).normalize();
         let up = glm::cross(&right, &self.direction).normalize();
+
+        let color = match rng.gen_range(0..3) {
+            0 => RgbColor::Red,
+            1 => RgbColor::Green,
+            2 => RgbColor::Blue,
+            _ => unreachable!(),
+        };
 
         loop {
             let dim = self.sensor_width.max(self.sensor_height);
@@ -205,10 +242,14 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                     + y * up
             } else {
                 let [x, y, z]: [f64; 3] = rng.sample(UnitSphere);
-                return Ray {
-                    origin: p,
-                    dir: glm::vec3(x, y, z),
-                };
+                return (
+                    Ray {
+                        origin: p,
+                        dir: glm::vec3(x, y, z),
+                    },
+                    color.as_vec(),
+                    1. / 3.,
+                );
             };
 
             let mut dir = (new_p - p).normalize();
@@ -218,11 +259,11 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
             for i in (0..self.lens_system.surfaces.len()).rev() {
                 let surface = &self.lens_system.surfaces[i];
                 axial_loc += surface.thickness;
-                let next_n_d = if i == 0 {
+                let next_n = if i == 0 {
                     IMAGING_MEDIUM_N_D
                 } else {
                     self.lens_system.surfaces[i - 1]
-                        .n_d
+                        .n(color.wavelength())
                         .unwrap_or(IMAGING_MEDIUM_N_D)
                 };
 
@@ -255,7 +296,9 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                 // Calculate refracted ray.
                 let normal = (intersect - lens_center).normalize();
                 let sin_theta1 = normal.cross(&dir).norm();
-                let sin_theta2 = surface.n_d.unwrap_or(IMAGING_MEDIUM_N_D) / next_n_d * sin_theta1;
+                let sin_theta2 = surface.n(color.wavelength()).unwrap_or(IMAGING_MEDIUM_N_D)
+                    / next_n
+                    * sin_theta1;
                 let dir_norm = normal.dot(&dir) * normal;
                 let dir_perp = dir - dir_norm;
                 let new_dir_perp = sin_theta2 / sin_theta1 * dir_perp;
@@ -266,7 +309,7 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
             }
 
             if valid {
-                break Ray { origin: p, dir };
+                break (Ray { origin: p, dir }, color.as_vec(), 1. / 3.);
             }
         }
     }
