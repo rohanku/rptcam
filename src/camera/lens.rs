@@ -5,8 +5,13 @@ use crate::{Aperture, ApertureShape};
 /// Refractive index of imaging medium.
 pub const IMAGING_MEDIUM_N_D: f64 = 1.;
 
+/// The wavelength of the sodium D line (yellow).
 pub const WAVELENGTH_D_LINE: f64 = 589.3e-9;
+
+/// The wavelength of the hydrogen F line (blue).
 pub const WAVELENGTH_F_LINE: f64 = 486.1e-9;
+
+/// The wavelength of the hydrogen C line (red).
 pub const WAVELENGTH_C_LINE: f64 = 656.3e-9;
 
 /// An object-facing surface of a lens element within a lens system
@@ -140,6 +145,7 @@ impl Lens for SingleLens {
 }
 
 impl LensSurface {
+    /// The index of refraction at the given wavelength.
     pub fn n(&self, wavelength: f64) -> Option<f64> {
         if let Some(n_d) = self.n_d {
             let k = (n_d - 1.) / (self.v_no * (WAVELENGTH_F_LINE - WAVELENGTH_C_LINE));
