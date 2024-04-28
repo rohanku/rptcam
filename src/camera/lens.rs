@@ -3,6 +3,10 @@
 /// Refractive index of imaging medium.
 pub const IMAGING_MEDIUM_N_D: f64 = 1.;
 
+pub const WAVELENGTH_D_LINE: f64 = 589.3e-9;
+pub const WAVELENGTH_F_LINE: f64 = 486.1e-9;
+pub const WAVELENGTH_C_LINE: f64 = 656.3e-9;
+
 /// An object-facing surface of a lens element within a lens system
 #[derive(Clone, Copy, Debug)]
 pub struct LensSurface {
@@ -14,6 +18,8 @@ pub struct LensSurface {
     pub n_d: Option<f64>,
     /// Aperture diameter
     pub aperture: f64,
+    /// V number, characterizing dispersion.
+    pub v_no: f64,
 }
 
 /// A lens system
@@ -53,6 +59,8 @@ pub struct SingleLens {
     pub thickness: f64,
     /// Index of refraction at sodium `d` line.
     pub n_d: f64,
+    /// V number.
+    pub v_no: f64,
 }
 
 impl Default for SingleLens {
@@ -63,6 +71,7 @@ impl Default for SingleLens {
             aperture: 0.07,
             thickness: 0.01,
             n_d: 1.8,
+            v_no: 1.,
         }
     }
 }
@@ -101,14 +110,27 @@ impl Lens for SingleLens {
                     thickness: self.thickness,
                     n_d: Some(self.n_d),
                     aperture: self.aperture,
+                    v_no: self.v_no,
                 },
                 LensSurface {
                     radius: -self.r2,
                     thickness: image_distance - self.thickness / 2.,
                     n_d: None,
                     aperture: self.aperture,
+                    v_no: 0.0,
                 },
             ],
+        }
+    }
+}
+
+impl LensSurface {
+    pub fn n(&self, wavelength: f64) -> Option<f64> {
+        if let Some(n_d) = self.n_d {
+            let k = (n_d - 1.) / (self.v_no * (WAVELENGTH_F_LINE - WAVELENGTH_C_LINE));
+            Some(n_d + k * (wavelength - WAVELENGTH_D_LINE))
+        } else {
+            None
         }
     }
 }
