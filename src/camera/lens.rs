@@ -81,17 +81,27 @@ impl Lens for SingleLens {
         None
     }
     fn focus_min(&self) -> Option<f64> {
-        Some((2. * self.focal_length()).sqrt())
+        Some(4. * self.focal_length())
     }
     fn lens_system(&self, object_distance: f64) -> LensSystem {
+        let object_distance = object_distance.max(4. * self.focal_length());
         let a = 1.;
         let b = -object_distance;
-        let c = self.focal_length();
+        let c = self.focal_length() * object_distance;
         let discriminant = b * b - 4. * a * c;
+        let min_distance = self.thickness / 2. + 0.2;
         let image_distance = if discriminant < 0. {
-            self.thickness / 2. + 0.1
+            min_distance
         } else {
-            (self.thickness / 2. + 0.1).max((-b + discriminant.sqrt()) / 2. / a)
+            let opt1 = (-b - discriminant.sqrt()) / 2. / a;
+            let opt2 = (-b + discriminant.sqrt()) / 2. / a;
+            if opt1 > min_distance {
+                opt1
+            } else if opt2 > min_distance {
+                opt2
+            } else {
+                min_distance
+            }
         };
 
         LensSystem {
