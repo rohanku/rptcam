@@ -155,13 +155,13 @@ pub struct PhysicalCamera<L> {
 impl<L: Lens + Default> Default for PhysicalCamera<L> {
     fn default() -> Self {
         let lens = L::default();
-        let lens_system = lens.lens_system(4.);
+        let lens_system = lens.lens_system(11.);
         Self {
-            eye: glm::vec3(0.0, -0.5, 7.0),
+            eye: glm::vec3(0.0, -0.5, 14.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
-            sensor_width: 8.,
-            sensor_height: 6.,
+            sensor_width: 1.6,
+            sensor_height: 1.2,
             lens,
             lens_system,
         }
@@ -189,9 +189,8 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
         let right = glm::cross(&self.direction, &self.up).normalize();
 
         loop {
-            let mut p = self.eye
-                + self.sensor_width * x / 2. * right
-                + self.sensor_height * y / 2. * self.up;
+            let dim = self.sensor_width.max(self.sensor_height);
+            let mut p = self.eye + dim * x / 2. * right + dim * y / 2. * self.up;
 
             let new_p = if let Some(surface) = self.lens_system.surfaces.last() {
                 let [x, y]: [f64; 2] = rng.sample(UnitDisc);
