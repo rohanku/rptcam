@@ -1,6 +1,7 @@
 //! Compound of five cubes: https://en.wikipedia.org/wiki/Compound_of_five_cubes
 
 use rpt::*;
+use std::sync::Arc;
 
 #[allow(clippy::many_single_char_names)]
 fn lamp(x: f64, y: f64, z: f64, r: f64, e: f64) -> Light {
@@ -50,7 +51,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 1.0, 0.0),
         std::f64::consts::FRAC_PI_4,
     );
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(1024)
         .height(1024)
         .max_bounces(5)

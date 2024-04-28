@@ -2,6 +2,7 @@
 
 use std::fs::File;
 use std::io::{prelude::*, Cursor, SeekFrom};
+use std::sync::Arc;
 use std::time::Instant;
 use tempfile::tempfile;
 use zip::ZipArchive;
@@ -65,7 +66,7 @@ fn main() -> color_eyre::Result<()> {
     );
 
     let mut time = Instant::now();
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(960)
         .height(540)
         .max_bounces(5)

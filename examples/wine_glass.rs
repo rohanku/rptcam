@@ -4,6 +4,7 @@ use image::{
 };
 use std::fs::File;
 use std::io::BufReader;
+use std::sync::Arc;
 use std::time::Instant;
 
 use rpt::*;
@@ -64,7 +65,7 @@ fn main() -> color_eyre::Result<()> {
     );
 
     let mut time = Instant::now();
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(1920)
         .height(1080)
         .max_bounces(6)

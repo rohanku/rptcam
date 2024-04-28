@@ -1,6 +1,7 @@
 //! Stanford dragon render
 
 use std::io::{prelude::*, Cursor, SeekFrom};
+use std::sync::Arc;
 use tempfile::tempfile;
 use zip::ZipArchive;
 
@@ -65,7 +66,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 1.0, 0.0),
         std::f64::consts::FRAC_PI_6,
     );
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .max_bounces(2)
         .num_samples(1)
         .render()

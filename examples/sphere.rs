@@ -1,4 +1,5 @@
 use rpt::*;
+use std::sync::Arc;
 
 fn main() {
     let mut scene = Scene::new();
@@ -24,7 +25,7 @@ fn main() {
         std::f64::consts::FRAC_PI_4,
     );
 
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(960)
         .height(540)
         .max_bounces(2)

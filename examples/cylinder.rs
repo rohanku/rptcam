@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::sync::Arc;
 
 use rpt::*;
 
@@ -28,7 +29,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(1.0, -1.0, 0.0).normalize(),
     ));
 
-    Renderer::new(&scene, ThinLensCamera::default())
+    Renderer::new(&scene, Arc::new(ThinLensCamera::default()))
         .width(512)
         .height(512)
         .render()

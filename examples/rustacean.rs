@@ -3,6 +3,7 @@
 //! Original model credit (.PLY) goes to Raptori at https://www.thingiverse.com/thing:3414267
 
 use std::fs::File;
+use std::sync::Arc;
 
 use rpt::*;
 
@@ -61,7 +62,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 1.0, 0.0),
         std::f64::consts::FRAC_PI_6,
     );
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(800)
         .height(800)
         .max_bounces(4)

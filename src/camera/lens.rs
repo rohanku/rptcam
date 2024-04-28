@@ -1,10 +1,12 @@
 //!
 
+use crate::{Aperture, ApertureShape};
+
 /// Refractive index of imaging medium.
 pub const IMAGING_MEDIUM_N_D: f64 = 1.;
 
 /// An object-facing surface of a lens element within a lens system
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct LensSurface {
     /// Radius of curvature
     pub radius: f64,
@@ -12,8 +14,8 @@ pub struct LensSurface {
     pub thickness: f64,
     /// Element index of refraction for sodium `d` line
     pub n_d: Option<f64>,
-    /// Aperture diameter
-    pub aperture: f64,
+    /// Aperture
+    pub aperture: Aperture,
 }
 
 /// A lens system
@@ -37,7 +39,7 @@ pub trait Lens: Send + Sync {
 }
 
 /// A single lens
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct SingleLens {
     /// Outward-facing radius of curvature.
     ///
@@ -47,8 +49,8 @@ pub struct SingleLens {
     ///
     /// Positive radius of curvature indicates a convex surface.
     pub r2: f64,
-    /// Aperture diameter.
-    pub aperture: f64,
+    /// Aperture
+    pub aperture: Aperture,
     /// Thickness.
     pub thickness: f64,
     /// Index of refraction at sodium `d` line.
@@ -60,7 +62,10 @@ impl Default for SingleLens {
         Self {
             r1: 4.,
             r2: 4.,
-            aperture: 0.07,
+            aperture: Aperture {
+                scale: 0.035,
+                shape: ApertureShape::Circle,
+            },
             thickness: 0.01,
             n_d: 1.8,
         }
@@ -110,13 +115,13 @@ impl Lens for SingleLens {
                     radius: self.r1,
                     thickness: self.thickness,
                     n_d: Some(self.n_d),
-                    aperture: self.aperture,
+                    aperture: self.aperture.clone(),
                 },
                 LensSurface {
                     radius: -self.r2,
                     thickness: image_distance - self.thickness / 2.,
                     n_d: None,
-                    aperture: self.aperture,
+                    aperture: self.aperture.clone(),
                 },
             ],
         }

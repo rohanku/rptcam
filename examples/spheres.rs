@@ -2,6 +2,7 @@
 //!
 //! The scene was laid out in Blender, which is why the camera is facing Z-up.
 
+use std::sync::Arc;
 use std::time::Instant;
 
 use rpt::*;
@@ -56,10 +57,16 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 0.0, 1.0),
         0.6911,
     )
-    .focus(glm::vec3(0.1, -2.0, 0.6), 0.15);
+    .focus(
+        glm::vec3(0.1, -2.0, 0.6),
+        Some(Aperture {
+            scale: 0.15,
+            shape: ApertureShape::Circle,
+        }),
+    );
 
     let mut time = Instant::now();
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(800)
         .height(600)
         .max_bounces(6)
