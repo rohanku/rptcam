@@ -3,6 +3,7 @@ use image::{
     Rgb,
 };
 use std::io::BufReader;
+use std::sync::Arc;
 
 use rpt::*;
 
@@ -77,7 +78,7 @@ fn main() -> color_eyre::Result<()> {
     ));
      */
 
-    Renderer::new(&scene, ThinLensCamera::default())
+    Renderer::new(&scene, Arc::new(ThinLensCamera::default()))
         .width(800)
         .height(600)
         .max_bounces(1)
