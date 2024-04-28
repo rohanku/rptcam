@@ -68,7 +68,7 @@ fn main() -> color_eyre::Result<()> {
 
     scene.environment = Environment::Hdri(hdri);
 
-    let camera = Camera::look_at(
+    let camera = ThinLensCamera::look_at(
         glm::vec3(0.0, 1.5, 3.1),
         glm::vec3(0.0, 1.0, 0.0),
         glm::vec3(0.0, 1.0, 0.0),

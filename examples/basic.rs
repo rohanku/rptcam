@@ -1,17 +1,25 @@
+use rpt::lens::SingleLens;
 use rpt::*;
+use std::sync::Arc;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
     let mut scene = Scene::new();
 
-    scene.add(Object::new(sphere()));
+    scene.add(Object::new(sphere().translate(&glm::vec3(0., 0., -4.0))));
+
+    scene.add(Object::new(
+        sphere()
+            .scale(&glm::vec3(0.2, 0.2, 0.2))
+            .translate(&glm::vec3(0., -0.8, 2.0)),
+    ));
     scene.add(
         Object::new(
             cube()
                 .rotate_y(glm::pi::<f64>() / 6.0)
                 .scale(&glm::vec3(0.5, 0.3, 0.4))
-                .translate(&glm::vec3(0.4, -0.8, 4.0)),
+                .translate(&glm::vec3(0.4, -0.8, 3.0)),
         )
         .material(Material::specular(hex_color(0xff00ff), 0.5)),
     );
@@ -42,7 +50,8 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 5.0, 5.0),
     ));
 
-    Renderer::new(&scene, Camera::default())
+    Renderer::new(&scene, Arc::new(PhysicalCamera::<SingleLens>::default()))
+        .num_samples(128)
         .width(800)
         .height(600)
         .render()

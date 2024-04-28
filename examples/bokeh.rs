@@ -1,5 +1,6 @@
 //! This is an example that demonstrates bokeh.
 
+use std::sync::Arc;
 use std::time::Instant;
 
 use rpt::*;
@@ -30,12 +31,7 @@ fn main() -> color_eyre::Result<()> {
     );
     for (pos, mtl) in spheres {
         scene.add(
-            Object::new(
-                sphere()
-                    .scale(&glm::vec3(0.1, 0.1, 0.1))
-                    .translate(&pos),
-            )
-                .material(mtl),
+            Object::new(sphere().scale(&glm::vec3(0.1, 0.1, 0.1)).translate(&pos)).material(mtl),
         )
     }
 
@@ -45,19 +41,26 @@ fn main() -> color_eyre::Result<()> {
                 .scale(&glm::vec3(2.0, 2.0, 2.0))
                 .translate(&glm::vec3(1.2, -1.5, 8.0)),
         )
-            .material(light_mtl),
+        .material(light_mtl),
     ));
 
-    let camera = Camera::look_at(
+    let camera = ThinLensCamera::look_at(
         glm::vec3(0.7166, -9.2992, 2.8803),
         glm::vec3(0.8673, 0.2095, 0.9557),
         glm::vec3(0.0, 0.0, 1.0),
         0.6911,
     )
-        .focus(glm::vec3(0.1, -2.0, 0.6), 0.50);
+    .focus(
+        glm::vec3(0.1, -2.0, 0.6),
+        Some(Aperture {
+            scale: 0.50,
+            focal_distance: 0.,
+            shape: ApertureShape::Poly(Polygon::get_heart(0.05, 0.05)),
+        }),
+    );
 
     let mut time = Instant::now();
-    Renderer::new(&scene, camera)
+    Renderer::new(&scene, Arc::new(camera))
         .width(800)
         .height(600)
         .max_bounces(6)
