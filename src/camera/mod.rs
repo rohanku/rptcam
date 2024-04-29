@@ -218,9 +218,9 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         let right = glm::cross(&self.direction, &self.up).normalize();
         let up = glm::cross(&right, &self.direction).normalize();
-        let wavelength = rng.sample(Uniform::new(400.0, 700.0));
-        let pdf = 1. / (700. - 400.);
+        let wavelength = rng.sample(Uniform::new(400.0e-9, 700.0e-9));
         let color = wavelength_to_rgb(wavelength);
+        let pdf = color.norm() / 2.;
 
         loop {
             let dim = self.sensor_width.max(self.sensor_height);
@@ -402,6 +402,7 @@ impl Polygon {
 }
 
 fn wavelength_to_rgb(wavelength: f64) -> Color {
+    let wavelength = wavelength * 1e9;
     let (r, g, b) = if (380. ..440.).contains(&wavelength) {
         (-(wavelength - 440.) / (440. - 380.), 0., 1.)
     } else if (440. ..490.).contains(&wavelength) {
