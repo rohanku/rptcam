@@ -1,5 +1,5 @@
 use glm::vec3;
-use rpt::lens::SingleLens;
+use rpt::lens::{AchromaticDoublet, SingleLens};
 use rpt::*;
 use std::sync::Arc;
 
@@ -52,14 +52,26 @@ fn main() -> color_eyre::Result<()> {
     ));
 
     let mut cam = PhysicalCamera::<SingleLens>::default();
-    cam.focus(vec3(0., 0., -1.));
+    cam.focus(vec3(0., 0., -2.));
+    let cam = Arc::new(cam);
 
-    Renderer::new(&scene, Arc::new(cam))
+    Renderer::new(&scene, cam)
         .num_samples(256)
         .width(800)
         .height(600)
         .render()
-        .save("output.png")?;
+        .save("single_lens.png")?;
+
+    let mut cam = PhysicalCamera::<AchromaticDoublet>::default();
+    cam.focus(vec3(0., 0., -2.));
+    let cam = Arc::new(cam);
+
+    Renderer::new(&scene, cam)
+        .num_samples(256)
+        .width(800)
+        .height(600)
+        .render()
+        .save("achromat.png")?;
 
     Ok(())
 }
