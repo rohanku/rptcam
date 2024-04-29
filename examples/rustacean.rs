@@ -60,20 +60,18 @@ fn main() -> color_eyre::Result<()> {
     let eye = glm::vec3(-2., 1.1, 15.);
     let center = glm::vec3(0.0, 0.9, 0.0);
 
-    let distance_steps = 14;
+    let distance_steps = 5;
     let min_distance = 11.;
-    let max_distance = 25.;
+    let max_distance = 22.;
     let distance_step_size = (max_distance - min_distance) / (distance_steps - 1) as f64;
 
-    let aperture_steps = 4;
+    let aperture_steps = 3;
     let min_aperture = 0.01;
     let max_aperture = 0.2;
     let aperture_step_size = (max_aperture - min_aperture) / (aperture_steps - 1) as f64;
 
     for (shape_i, shape) in [
         ApertureShape::Circle,
-        ApertureShape::Square,
-        ApertureShape::Poly(Polygon::get_star(5.0)),
         ApertureShape::Poly(Polygon::get_heart(0.05, 0.05)),
     ]
     .iter()
@@ -111,7 +109,7 @@ fn main() -> color_eyre::Result<()> {
                 Renderer::new(&scene, Arc::new(camera))
                     .width(800)
                     .height(600)
-                    .max_bounces(2)
+                    .max_bounces(1)
                     .num_samples(128)
                     .render()
                     .save(filename)?;
