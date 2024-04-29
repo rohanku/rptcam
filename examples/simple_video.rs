@@ -57,8 +57,8 @@ fn main() -> color_eyre::Result<()> {
     }
 
     Command::new("ffmpeg")
-        .args(&["-y", "-i", "video/image_%d.png", "-vcodec", "libx264"])
-        .args(&["-s", "800x600", "-pix_fmt", "yuv420p", "video.mp4"])
+        .args(["-y", "-i", "video/image_%d.png", "-vcodec", "libx264"])
+        .args(["-s", "800x600", "-pix_fmt", "yuv420p", "video.mp4"])
         .spawn()?
         .wait()?;
 
