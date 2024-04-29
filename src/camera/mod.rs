@@ -190,30 +190,6 @@ impl<L: Lens> PhysicalCamera<L> {
     }
 }
 
-enum RgbColor {
-    Red,
-    Green,
-    Blue,
-}
-
-impl RgbColor {
-    pub fn wavelength(&self) -> f64 {
-        match self {
-            RgbColor::Red => 656.3e-9,
-            RgbColor::Green => 537.7e-9,
-            RgbColor::Blue => 486.1e-9,
-        }
-    }
-
-    pub fn as_vec(&self) -> Color {
-        match self {
-            RgbColor::Red => vec3(1., 0., 0.),
-            RgbColor::Green => vec3(0., 1., 0.),
-            RgbColor::Blue => vec3(0., 0., 1.),
-        }
-    }
-}
-
 impl<L: Lens> Camera for PhysicalCamera<L> {
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         let right = glm::cross(&self.direction, &self.up).normalize();
@@ -401,6 +377,8 @@ impl Polygon {
     }
 }
 
+/// Converts wavelength to an RGB color.
+// Adapted from https://stackoverflow.com/questions/1472514/convert-light-frequency-to-rgb
 fn wavelength_to_rgb(wavelength: f64) -> Color {
     let wavelength = wavelength * 1e9;
     let (r, g, b) = if (380. ..440.).contains(&wavelength) {

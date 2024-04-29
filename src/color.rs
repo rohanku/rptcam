@@ -1,6 +1,7 @@
 /// A representation of an RGB color
 pub type Color = glm::DVec3;
 
+/// Gamma value.
 pub const SRGB_GAMMA: f64 = 2.2;
 
 /// Construct a new color from an sRGB hex integer, applying gamma correction to
