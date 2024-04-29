@@ -293,7 +293,7 @@ fn construct<T: Bounded>(objects: &[T], indices: Vec<usize>) -> Box<KdNode> {
         // First try the direction with maximum extent
         let bounds = bboxs
             .iter()
-            .fold(BoundingBox::default(), |b1, b2| b1.merge(&b2));
+            .fold(BoundingBox::default(), |b1, b2| b1.merge(b2));
         let extent = bounds.p_max - bounds.p_min;
         if extent.x > extent.y && extent.x > extent.z {
             if sx < threshold {

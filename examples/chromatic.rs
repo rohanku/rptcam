@@ -1,3 +1,4 @@
+use glm::vec3;
 use rpt::lens::SingleLens;
 use rpt::*;
 use std::sync::Arc;
@@ -50,8 +51,11 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 5.0, 5.0),
     ));
 
-    Renderer::new(&scene, Arc::new(PhysicalCamera::<SingleLens>::default()))
-        .num_samples(8192)
+    let mut cam = PhysicalCamera::<SingleLens>::default();
+    cam.focus(vec3(0., 0., -1.));
+
+    Renderer::new(&scene, Arc::new(cam))
+        .num_samples(256)
         .width(800)
         .height(600)
         .render()
