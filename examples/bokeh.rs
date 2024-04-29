@@ -73,7 +73,7 @@ fn main() -> color_eyre::Result<()> {
             for dist_i in 0..distance_steps + 4 {
                 let dist = distance_step_size * (dist_i as f64 - 2.) + min_distance;
                 let filename = format!(
-                    "bokeh_singlelens_shape{}_aperture{}_dist{}.png",
+                    "bokeh_singlelens_vno10_shape{}_aperture{}_dist{}.png",
                     shape_i, aperture_i, dist_i
                 );
                 println!("Rendering {filename}");
@@ -82,6 +82,7 @@ fn main() -> color_eyre::Result<()> {
                         scale: aperture,
                         shape: shape.clone(),
                     },
+                    v_no: 10.,
                     ..Default::default()
                 };
                 let lens_system = lens.lens_system(10.);
