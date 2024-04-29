@@ -2,10 +2,11 @@ pub mod lens;
 
 use crate::camera::lens::{Lens, LensSystem};
 use crate::lens::IMAGING_MEDIUM_N_D;
-use crate::Color;
-use glm::vec3;
+use crate::{Color, SRGB_GAMMA};
+use glm::{pow, vec3};
 use rand::distributions::Uniform;
 use rand::{rngs::StdRng, Rng};
+use rand_distr::num_traits::Pow;
 use rand_distr::{UnitDisc, UnitSphere};
 
 use crate::shape::Ray;
@@ -217,13 +218,9 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         let right = glm::cross(&self.direction, &self.up).normalize();
         let up = glm::cross(&right, &self.direction).normalize();
-
-        let color = match rng.gen_range(0..3) {
-            0 => RgbColor::Red,
-            1 => RgbColor::Green,
-            2 => RgbColor::Blue,
-            _ => unreachable!(),
-        };
+        let wavelength = rng.sample(Uniform::new(400.0, 700.0));
+        let pdf = 1. / (700. - 400.);
+        let color = wavelength_to_rgb(wavelength);
 
         loop {
             let dim = self.sensor_width.max(self.sensor_height);
@@ -245,10 +242,10 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                 return (
                     Ray {
                         origin: p,
-                        dir: glm::vec3(x, y, z),
+                        dir: vec3(x, y, z),
                     },
-                    color.as_vec(),
-                    1. / 3.,
+                    color,
+                    pdf,
                 );
             };
 
@@ -263,7 +260,7 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                     IMAGING_MEDIUM_N_D
                 } else {
                     self.lens_system.surfaces[i - 1]
-                        .n(color.wavelength())
+                        .n(wavelength)
                         .unwrap_or(IMAGING_MEDIUM_N_D)
                 };
 
@@ -296,9 +293,8 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
                 // Calculate refracted ray.
                 let normal = (intersect - lens_center).normalize();
                 let sin_theta1 = normal.cross(&dir).norm();
-                let sin_theta2 = surface.n(color.wavelength()).unwrap_or(IMAGING_MEDIUM_N_D)
-                    / next_n
-                    * sin_theta1;
+                let sin_theta2 =
+                    surface.n(wavelength).unwrap_or(IMAGING_MEDIUM_N_D) / next_n * sin_theta1;
                 let dir_norm = normal.dot(&dir) * normal;
                 let dir_perp = dir - dir_norm;
                 let new_dir_perp = sin_theta2 / sin_theta1 * dir_perp;
@@ -309,7 +305,7 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
             }
 
             if valid {
-                break (Ray { origin: p, dir }, color.as_vec(), 1. / 3.);
+                break (Ray { origin: p, dir }, color, pdf);
             }
         }
     }
@@ -403,4 +399,52 @@ impl Polygon {
         }
         c
     }
+}
+
+fn wavelength_to_rgb(wavelength: f64) -> Color {
+    let (r, g, b) = if ((wavelength >= 380.) && (wavelength < 440.)) {
+        (-(wavelength - 440.) / (440. - 380.), 0., 1.)
+    } else if ((wavelength >= 440.) && (wavelength < 490.)) {
+        (0., (wavelength - 440.) / (490. - 440.), 1.)
+    } else if ((wavelength >= 490.) && (wavelength < 510.)) {
+        (0., 1., -(wavelength - 510.) / (510. - 490.))
+    } else if ((wavelength >= 510.) && (wavelength < 580.)) {
+        ((wavelength - 510.) / (580. - 510.), 1., 0.)
+    } else if ((wavelength >= 580.) && (wavelength < 645.)) {
+        (1., -(wavelength - 645.) / (645. - 580.), 0.)
+    } else if ((wavelength >= 645.) && (wavelength < 781.)) {
+        (1., 0., 0.)
+    } else {
+        (0., 0., 0.)
+    };
+
+    // Let the intensity fall off near the vision limits
+
+    let factor = if ((wavelength >= 380.) && (wavelength < 420.)) {
+        0.3 + 0.7 * (wavelength - 380.) / (420. - 380.)
+    } else if ((wavelength >= 420.) && (wavelength < 701.)) {
+        1.0
+    } else if ((wavelength >= 701.) && (wavelength < 781.)) {
+        0.3 + 0.7 * (780. - wavelength) / (780. - 700.)
+    } else {
+        0.0
+    };
+
+    let r = if r < 1e-10 {
+        0.
+    } else {
+        (r * factor).pow(SRGB_GAMMA)
+    };
+    let g = if g < 1e-10 {
+        0.
+    } else {
+        (g * factor).pow(SRGB_GAMMA)
+    };
+    let b = if b < 1e-10 {
+        0.
+    } else {
+        (b * factor).pow(SRGB_GAMMA)
+    };
+
+    vec3(r, g, b)
 }
