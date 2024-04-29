@@ -45,51 +45,68 @@ fn main() -> color_eyre::Result<()> {
         .material(light_mtl),
     ));
 
-    let lens = SingleLens {
-        aperture: Aperture {
-            scale: 0.5,
-            shape: ApertureShape::Poly(Polygon::get_heart(0.05, 0.05)),
-        },
-        ..Default::default()
-    };
-    let lens_system = lens.lens_system(10.);
-    let mut camera = PhysicalCamera {
-        eye: Default::default(),
-        direction: Default::default(),
-        up: Default::default(),
-        sensor_width: 4.,
-        sensor_height: 3.,
-        lens,
-        lens_system,
-    };
+    let eye = glm::vec3(0.7166, -12.2992, 2.8803);
+    let center = glm::vec3(0.8673, 0.2095, 0.9557);
+    let dir = (center - eye).normalize();
 
-    camera.look_at(
-        glm::vec3(0.7166, -12.2992, 2.8803),
-        glm::vec3(0.8673, 0.2095, 0.9557),
-        glm::vec3(0.0, 0.0, 1.0),
-    );
-    camera.focus(glm::vec3(0.1, -2.0, 0.6));
+    let distance_steps = 10;
+    let min_distance = f64::abs((glm::vec3(0.1, -2.0, 0.6) - eye).dot(&dir));
+    let max_distance = f64::abs((glm::vec3(0.5, 4.0, 1.0) - eye).dot(&dir));
+    let distance_step_size = (max_distance - min_distance) / (distance_steps - 1) as f64;
 
-    let mut time = Instant::now();
-    Renderer::new(&scene, Arc::new(camera))
-        .width(800)
-        .height(600)
-        .max_bounces(6)
-        .num_samples(400)
-        .iterative_render(100, |iteration, buffer| {
-            let millis = time.elapsed().as_millis();
-            println!(
-                "Finished iteration {}, took {} ms, variance: {}",
-                iteration,
-                millis,
-                buffer.variance()
-            );
-            buffer
-                .image()
-                .save(format!("output_{:03}.png", iteration - 1))
-                .expect("Failed to save image");
-            time = Instant::now();
-        });
+    let aperture_steps = 4;
+    let min_aperture = 0.01;
+    let max_aperture = 0.2;
+    let aperture_step_size = (max_aperture - min_aperture) / (aperture_steps - 1) as f64;
+
+    for (shape_i, shape) in [
+        ApertureShape::Circle,
+        ApertureShape::Square,
+        ApertureShape::Poly(Polygon::get_star(5.0)),
+        ApertureShape::Poly(Polygon::get_heart(0.05, 0.05)),
+    ]
+    .iter()
+    .enumerate()
+    {
+        for aperture_i in 0..aperture_steps {
+            let aperture = aperture_step_size * aperture_i as f64 + min_aperture;
+            for dist_i in 0..distance_steps + 4 {
+                let dist = distance_step_size * (dist_i as f64 - 2.) + min_distance;
+                let filename = format!(
+                    "bokeh_singlelens_shape{}_aperture{}_dist{}.png",
+                    shape_i, aperture_i, dist_i
+                );
+                println!("Rendering {filename}");
+                let lens = SingleLens {
+                    aperture: Aperture {
+                        scale: aperture,
+                        shape: shape.clone(),
+                    },
+                    ..Default::default()
+                };
+                let lens_system = lens.lens_system(10.);
+                let mut camera = PhysicalCamera {
+                    eye: Default::default(),
+                    direction: Default::default(),
+                    up: Default::default(),
+                    sensor_width: 4.,
+                    sensor_height: 3.,
+                    lens,
+                    lens_system,
+                };
+                camera.look_at(eye, center, glm::vec3(0.0, 0.0, 1.0));
+                camera.focus(dist);
+
+                Renderer::new(&scene, Arc::new(camera))
+                    .width(800)
+                    .height(600)
+                    .max_bounces(1)
+                    .num_samples(400)
+                    .render()
+                    .save(filename)?;
+            }
+        }
+    }
 
     Ok(())
 }
