@@ -3,7 +3,7 @@ pub mod lens;
 use crate::camera::lens::{Lens, LensSystem};
 use crate::lens::IMAGING_MEDIUM_N_D;
 use crate::{Color, SRGB_GAMMA};
-use glm::{pow, vec3};
+use glm::vec3;
 use rand::distributions::Uniform;
 use rand::{rngs::StdRng, Rng};
 use rand_distr::num_traits::Pow;
@@ -402,17 +402,17 @@ impl Polygon {
 }
 
 fn wavelength_to_rgb(wavelength: f64) -> Color {
-    let (r, g, b) = if ((wavelength >= 380.) && (wavelength < 440.)) {
+    let (r, g, b) = if (380. ..440.).contains(&wavelength) {
         (-(wavelength - 440.) / (440. - 380.), 0., 1.)
-    } else if ((wavelength >= 440.) && (wavelength < 490.)) {
+    } else if (440. ..490.).contains(&wavelength) {
         (0., (wavelength - 440.) / (490. - 440.), 1.)
-    } else if ((wavelength >= 490.) && (wavelength < 510.)) {
+    } else if (490. ..510.).contains(&wavelength) {
         (0., 1., -(wavelength - 510.) / (510. - 490.))
-    } else if ((wavelength >= 510.) && (wavelength < 580.)) {
+    } else if (510. ..580.).contains(&wavelength) {
         ((wavelength - 510.) / (580. - 510.), 1., 0.)
-    } else if ((wavelength >= 580.) && (wavelength < 645.)) {
+    } else if (580. ..645.).contains(&wavelength) {
         (1., -(wavelength - 645.) / (645. - 580.), 0.)
-    } else if ((wavelength >= 645.) && (wavelength < 781.)) {
+    } else if (645. ..781.).contains(&wavelength) {
         (1., 0., 0.)
     } else {
         (0., 0., 0.)
@@ -420,11 +420,11 @@ fn wavelength_to_rgb(wavelength: f64) -> Color {
 
     // Let the intensity fall off near the vision limits
 
-    let factor = if ((wavelength >= 380.) && (wavelength < 420.)) {
+    let factor = if (380. ..420.).contains(&wavelength) {
         0.3 + 0.7 * (wavelength - 380.) / (420. - 380.)
-    } else if ((wavelength >= 420.) && (wavelength < 701.)) {
+    } else if (420. ..701.).contains(&wavelength) {
         1.0
-    } else if ((wavelength >= 701.) && (wavelength < 781.)) {
+    } else if (701. ..781.).contains(&wavelength) {
         0.3 + 0.7 * (780. - wavelength) / (780. - 700.)
     } else {
         0.0

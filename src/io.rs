@@ -123,7 +123,7 @@ pub fn load_obj_with_mtl(obj_file: File, mtl_file: File) -> io::Result<Vec<Objec
                 if last_usemtl.is_none() || last_usemtl.as_ref().unwrap() != tokens[1] {
                     if !current_triangles.is_empty() {
                         objects.push(
-                            Object::new(Mesh::new(current_triangles.drain(..).collect()))
+                            Object::new(Mesh::new(std::mem::take(&mut current_triangles)))
                                 .material(current_material),
                         );
                     }
@@ -140,7 +140,7 @@ pub fn load_obj_with_mtl(obj_file: File, mtl_file: File) -> io::Result<Vec<Objec
 
     if !current_triangles.is_empty() {
         objects.push(
-            Object::new(Mesh::new(current_triangles.drain(..).collect()))
+            Object::new(Mesh::new(std::mem::take(&mut current_triangles)))
                 .material(current_material),
         );
     }
