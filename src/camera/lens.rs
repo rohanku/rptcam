@@ -81,7 +81,7 @@ impl Default for SingleLens {
             },
             thickness: 0.01,
             n_d: 1.8,
-            v_no: 1000.,
+            v_no: 100000.,
         }
     }
 }

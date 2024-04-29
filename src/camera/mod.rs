@@ -182,8 +182,13 @@ impl<L: Lens> PhysicalCamera<L> {
         self.up = (up - up.dot(&self.direction) * self.direction).normalize();
     }
 
+    /// Focuses the camera at an object at the given distance.
+    pub fn focus(&mut self, object_distance: f64) {
+        self.lens_system = self.lens.lens_system(object_distance);
+    }
+
     /// Focuses the camera on the given point.
-    pub fn focus(&mut self, focal_point: glm::DVec3) {
+    pub fn focus_point(&mut self, focal_point: glm::DVec3) {
         self.lens_system = self
             .lens
             .lens_system((focal_point - self.eye).dot(&self.direction).abs());
