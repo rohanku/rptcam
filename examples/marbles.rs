@@ -99,7 +99,7 @@ fn main() -> color_eyre::Result<()> {
         );
 
         let camera = Arc::new(
-            ThinLensCamera::look_at(
+            PinholeCamera::look_at(
                 glm::vec3(0.0, 1.0, 6.0),
                 glm::vec3(0.0, 1.0, 0.0),
                 glm::vec3(0.0, 1.0, 0.0),

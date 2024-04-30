@@ -45,7 +45,7 @@ fn main() -> color_eyre::Result<()> {
     scene.add(lamp(0.0, 0.5, 5.0, 1.0, 2.0));
     scene.add(lamp(2.0, 1.0, -5.0, 0.6, 10.0));
 
-    let camera = ThinLensCamera::look_at(
+    let camera = PinholeCamera::look_at(
         glm::vec3(-0.9, 1.2, 2.4),
         glm::vec3(0.0, 0.0, 0.0),
         glm::vec3(0.0, 1.0, 0.0),

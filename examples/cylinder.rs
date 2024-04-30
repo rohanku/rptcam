@@ -29,7 +29,7 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(1.0, -1.0, 0.0).normalize(),
     ));
 
-    Renderer::new(&scene, Arc::new(ThinLensCamera::default()))
+    Renderer::new(&scene, Arc::new(PinholeCamera::default()))
         .width(512)
         .height(512)
         .render()

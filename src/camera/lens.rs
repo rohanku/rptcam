@@ -175,21 +175,38 @@ pub struct AchromaticDoublet {
 }
 
 /// Parameters for an achromatic doublet.
+///
+/// Lens 1: positive (convex, high vno, low n).
+/// Lens 2: negative (concave, low vno, high n),
 #[derive(Clone, Debug)]
 pub struct AchromaticDoubletParams {
-    v1: f64,
-    v2: f64,
-    n1: f64,
-    n2: f64,
-    feq: f64,
-    thickness: f64,
-    aperture: Aperture,
-    r1: f64,
+    /// Vno of the first lens
+    pub v1: f64,
+    /// Vno of the second lens
+    pub v2: f64,
+    /// Refractive index of the first lens.
+    pub n1: f64,
+    /// Refractive index of the second lens.
+    pub n2: f64,
+    /// Equivalent focal length
+    pub feq: f64,
+    /// Lens thickness
+    pub thickness: f64,
+    /// Aperture
+    pub aperture: Aperture,
+    /// Radius of first lens's outer surface
+    pub r1: f64,
 }
 
 impl Default for AchromaticDoublet {
     fn default() -> Self {
-        Self::new(AchromaticDoubletParams {
+        Self::new(AchromaticDoubletParams::default())
+    }
+}
+
+impl Default for AchromaticDoubletParams {
+    fn default() -> Self {
+        Self {
             v1: 3.,
             v2: 1.,
             n1: 1.3,
@@ -201,7 +218,7 @@ impl Default for AchromaticDoublet {
                 shape: ApertureShape::Circle,
             },
             r1: 4.,
-        })
+        }
     }
 }
 

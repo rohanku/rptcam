@@ -5,7 +5,7 @@
 use std::fs::File;
 use std::sync::Arc;
 
-use rpt::lens::{Lens, SingleLens};
+use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens};
 use rpt::*;
 
 fn main() -> color_eyre::Result<()> {
@@ -60,9 +60,9 @@ fn main() -> color_eyre::Result<()> {
     let eye = glm::vec3(-2., 1.1, 15.);
     let center = glm::vec3(0.0, 0.9, 0.0);
 
-    let distance_steps = 5;
+    let distance_steps = 10;
     let min_distance = 11.;
-    let max_distance = 22.;
+    let max_distance = 25.;
     let distance_step_size = (max_distance - min_distance) / (distance_steps - 1) as f64;
 
     let aperture_steps = 3;
@@ -77,22 +77,29 @@ fn main() -> color_eyre::Result<()> {
     .iter()
     .enumerate()
     {
-        for aperture_i in 0..aperture_steps {
+        for aperture_i in (0..aperture_steps).rev() {
             let aperture = aperture_step_size * aperture_i as f64 + min_aperture;
             for dist_i in 0..distance_steps {
                 let dist = distance_step_size * dist_i as f64 + min_distance;
                 let filename = format!(
-                    "rustacean_singlelens_shape{}_aperture{}_dist{}.png",
+                    "rustacean_achromatic_shape{}_aperture{}_dist{}.png",
                     shape_i, aperture_i, dist_i
                 );
                 println!("Rendering {filename}");
-                let lens = SingleLens {
+                // let lens = SingleLens {
+                //     aperture: Aperture {
+                //         scale: aperture,
+                //         shape: shape.clone(),
+                //     },
+                //     ..Default::default()
+                // };
+                let lens = AchromaticDoublet::new(AchromaticDoubletParams {
                     aperture: Aperture {
                         scale: aperture,
                         shape: shape.clone(),
                     },
                     ..Default::default()
-                };
+                });
                 let lens_system = lens.lens_system(10.);
                 let mut camera = PhysicalCamera {
                     eye: Default::default(),
@@ -110,7 +117,7 @@ fn main() -> color_eyre::Result<()> {
                     .width(800)
                     .height(600)
                     .max_bounces(1)
-                    .num_samples(128)
+                    .num_samples(512)
                     .render()
                     .save(filename)?;
             }
