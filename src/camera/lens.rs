@@ -1,4 +1,4 @@
-//!
+//! Lenses.
 
 use crate::{Aperture, ApertureShape};
 
@@ -152,6 +152,147 @@ impl LensSurface {
             Some(n_d + k * (wavelength - WAVELENGTH_D_LINE))
         } else {
             None
+        }
+    }
+}
+
+/// An achromatic doublet.
+///
+/// Lens 1: positive (convex, high vno, low n).
+/// Lens 2: negative (concave, low vno, high n),
+#[derive(Clone, Debug)]
+pub struct AchromaticDoublet {
+    v1: f64,
+    v2: f64,
+    n1: f64,
+    n2: f64,
+    feq: f64,
+    thickness: f64,
+    aperture: Aperture,
+    r1: f64,
+    r2: f64,
+    r3: f64,
+}
+
+/// Parameters for an achromatic doublet.
+#[derive(Clone, Debug)]
+pub struct AchromaticDoubletParams {
+    v1: f64,
+    v2: f64,
+    n1: f64,
+    n2: f64,
+    feq: f64,
+    thickness: f64,
+    aperture: Aperture,
+    r1: f64,
+}
+
+impl Default for AchromaticDoublet {
+    fn default() -> Self {
+        Self::new(AchromaticDoubletParams {
+            v1: 3.,
+            v2: 1.,
+            n1: 1.3,
+            n2: 1.8,
+            feq: 2.5,
+            thickness: 0.005,
+            aperture: Aperture {
+                scale: 0.100,
+                shape: ApertureShape::Circle,
+            },
+            r1: 4.,
+        })
+    }
+}
+
+impl AchromaticDoublet {
+    /// Creates a new [`AchromaticDoublet`].
+    pub fn new(params: AchromaticDoubletParams) -> Self {
+        let w1 = 1. / params.v1;
+        let w2 = 1. / params.v2;
+
+        let ptot = 1. / params.feq;
+        let p1 = ptot / (1. - w1 / w2);
+        let p2 = ptot - p1;
+        let r2 = 1. / (p1 / (params.n1 - 1.) - 1. / params.r1);
+        let r3 = 1. / (-p2 / (params.n2 - 1.) - 1. / r2);
+
+        assert!(params.r1 > 0.);
+        assert!(r2 > 0.);
+
+        Self {
+            v1: params.v1,
+            v2: params.v2,
+            n1: params.n1,
+            n2: params.n2,
+            feq: params.feq,
+            thickness: params.thickness,
+            aperture: params.aperture,
+            r1: params.r1,
+            r2,
+            r3,
+        }
+    }
+
+    /// Focal length of this lens.
+    pub fn focal_length(&self) -> f64 {
+        self.feq
+    }
+}
+
+impl Lens for AchromaticDoublet {
+    fn focus_max(&self) -> Option<f64> {
+        None
+    }
+    fn focus_min(&self) -> Option<f64> {
+        None
+    }
+
+    fn lens_system(&self, object_distance: f64) -> LensSystem {
+        let object_distance = object_distance.max(4. * self.focal_length());
+        let a = 1.;
+        let b = -object_distance;
+        let c = self.focal_length() * object_distance;
+        let discriminant = b * b - 4. * a * c;
+        let min_distance = self.thickness + 0.2;
+        let image_distance = if discriminant < 0. {
+            min_distance
+        } else {
+            let opt1 = (-b - discriminant.sqrt()) / 2. / a;
+            let opt2 = (-b + discriminant.sqrt()) / 2. / a;
+            if opt1 > min_distance {
+                opt1
+            } else if opt2 > min_distance {
+                opt2
+            } else {
+                min_distance
+            }
+        };
+
+        LensSystem {
+            surfaces: vec![
+                LensSurface {
+                    radius: self.r1,
+                    thickness: self.thickness,
+                    aperture: self.aperture.clone(),
+                    n_d: Some(self.n1),
+                    v_no: self.v1,
+                },
+                LensSurface {
+                    radius: -self.r2,
+                    thickness: self.thickness,
+                    aperture: self.aperture.clone(),
+                    n_d: Some(self.n2),
+                    v_no: self.v2,
+                },
+                LensSurface {
+                    radius: self.r3,
+                    thickness: image_distance - self.thickness,
+                    aperture: self.aperture.clone(),
+                    n_d: None,
+                    v_no: 0.0,
+                },
+            ],
         }
     }
 }
