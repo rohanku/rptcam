@@ -1,5 +1,5 @@
 use glm::vec3;
-use rpt::lens::SingleLens;
+use rpt::lens::{FisheyeLens, SingleLens};
 use rpt::*;
 use std::sync::Arc;
 
@@ -51,8 +51,8 @@ fn main() -> color_eyre::Result<()> {
         glm::vec3(0.0, 5.0, 5.0),
     ));
 
-    let mut cam = PhysicalCamera::<SingleLens>::default();
-    cam.focus(vec3(0., 0., -1.));
+    let mut cam = PhysicalCamera::<FisheyeLens>::default();
+    cam.focus(10.);
 
     Renderer::new(&scene, Arc::new(cam))
         .num_samples(256)

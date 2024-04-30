@@ -155,3 +155,81 @@ impl LensSurface {
         }
     }
 }
+
+
+pub struct FisheyeLens {
+    n_d: f64,
+    v_no: f64,
+}
+
+impl Default for FisheyeLens {
+    fn default() -> Self {
+        Self {
+            n_d: 1.6,
+            v_no: 10000.,
+        }
+    }
+}
+
+impl Lens for FisheyeLens {
+    fn focus_min(&self) -> Option<f64> {
+        None
+    }
+
+    fn focus_max(&self) -> Option<f64> {
+        None
+    }
+
+    fn lens_system(&self, object_distance: f64) -> LensSystem {
+        let aperture = Aperture {
+            scale: 0.400,
+            shape: ApertureShape::Circle,
+        };
+        LensSystem {
+            surfaces: vec![
+                LensSurface {
+                    radius: 6.,
+                    thickness: 0.020,
+                    aperture: aperture.clone(),
+                    n_d: Some(self.n_d),
+                    v_no: self.v_no,
+                },
+                LensSurface {
+                    radius: 2.,
+                    thickness: 0.020,
+                    aperture: aperture.clone(),
+                    n_d: None,
+                    v_no: 0.,
+                },
+                LensSurface {
+                    radius: 4.,
+                    thickness: 0.020,
+                    aperture: aperture.clone(),
+                    n_d: Some(self.n_d),
+                    v_no: self.v_no,
+                },
+                LensSurface {
+                    radius: 6.,
+                    thickness: 0.020,
+                    aperture: aperture.clone(),
+                    n_d: None,
+                    v_no: 0.0,
+                },
+                LensSurface {
+                    radius: 6.,
+                    thickness: 0.020,
+                    aperture: aperture.clone(),
+                    n_d: Some(self.n_d),
+                    v_no: self.v_no,
+                },
+                LensSurface {
+                    radius: -3.,
+                    thickness: 0.020,
+                    aperture: aperture.clone(),
+                    n_d: None,
+                    v_no: 0.0,
+                },
+            ],
+        }
+    }
+}
