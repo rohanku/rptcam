@@ -3,7 +3,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use rpt::lens::{Lens, SingleLens};
+use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens, SingleLens};
 use rpt::*;
 
 fn main() -> color_eyre::Result<()> {
@@ -68,23 +68,30 @@ fn main() -> color_eyre::Result<()> {
     .iter()
     .enumerate()
     {
-        for aperture_i in 0..aperture_steps {
+        for aperture_i in (0..aperture_steps).rev() {
             let aperture = aperture_step_size * aperture_i as f64 + min_aperture;
             for dist_i in 0..distance_steps + 4 {
                 let dist = distance_step_size * (dist_i as f64 - 2.) + min_distance;
                 let filename = format!(
-                    "bokeh_singlelens_vno10_shape{}_aperture{}_dist{}.png",
+                    "bokeh_achromatic_shape{}_aperture{}_dist{}.png",
                     shape_i, aperture_i, dist_i
                 );
                 println!("Rendering {filename}");
-                let lens = SingleLens {
+                // let lens = SingleLens {
+                //     aperture: Aperture {
+                //         scale: aperture,
+                //         shape: shape.clone(),
+                //     },
+                //     v_no: 10.,
+                //     ..Default::default()
+                // };
+                let lens = AchromaticDoublet::new(AchromaticDoubletParams {
                     aperture: Aperture {
                         scale: aperture,
                         shape: shape.clone(),
                     },
-                    v_no: 10.,
                     ..Default::default()
-                };
+                });
                 let lens_system = lens.lens_system(10.);
                 let mut camera = PhysicalCamera {
                     eye: Default::default(),

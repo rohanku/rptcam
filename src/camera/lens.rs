@@ -177,19 +177,26 @@ pub struct AchromaticDoublet {
 /// Parameters for an achromatic doublet.
 #[derive(Clone, Debug)]
 pub struct AchromaticDoubletParams {
-    v1: f64,
-    v2: f64,
-    n1: f64,
-    n2: f64,
-    feq: f64,
-    thickness: f64,
-    aperture: Aperture,
-    r1: f64,
+    ///
+    pub v1: f64,
+    pub v2: f64,
+    pub n1: f64,
+    pub n2: f64,
+    pub feq: f64,
+    pub thickness: f64,
+    pub aperture: Aperture,
+    pub r1: f64,
 }
 
 impl Default for AchromaticDoublet {
     fn default() -> Self {
-        Self::new(AchromaticDoubletParams {
+        Self::new(AchromaticDoubletParams::default())
+    }
+}
+
+impl Default for AchromaticDoubletParams {
+    fn default() -> Self {
+        Self {
             v1: 3.,
             v2: 1.,
             n1: 1.3,
@@ -201,7 +208,7 @@ impl Default for AchromaticDoublet {
                 shape: ApertureShape::Circle,
             },
             r1: 4.,
-        })
+        }
     }
 }
 
