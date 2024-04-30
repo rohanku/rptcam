@@ -60,9 +60,9 @@ fn main() -> color_eyre::Result<()> {
     let eye = glm::vec3(-2., 1.1, 15.);
     let center = glm::vec3(0.0, 0.9, 0.0);
 
-    let distance_steps = 5;
+    let distance_steps = 10;
     let min_distance = 11.;
-    let max_distance = 22.;
+    let max_distance = 25.;
     let distance_step_size = (max_distance - min_distance) / (distance_steps - 1) as f64;
 
     let aperture_steps = 3;
@@ -117,7 +117,7 @@ fn main() -> color_eyre::Result<()> {
                     .width(800)
                     .height(600)
                     .max_bounces(1)
-                    .num_samples(128)
+                    .num_samples(512)
                     .render()
                     .save(filename)?;
             }
