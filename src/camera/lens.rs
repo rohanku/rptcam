@@ -174,6 +174,7 @@ pub struct AchromaticDoublet {
     r3: f64,
 }
 
+/// Parameters for an achromatic doublet.
 #[derive(Clone, Debug)]
 pub struct AchromaticDoubletParams {
     v1: f64,
@@ -205,6 +206,7 @@ impl Default for AchromaticDoublet {
 }
 
 impl AchromaticDoublet {
+    /// Creates a new [`AchromaticDoublet`].
     pub fn new(params: AchromaticDoubletParams) -> Self {
         let w1 = 1. / params.v1;
         let w2 = 1. / params.v2;
