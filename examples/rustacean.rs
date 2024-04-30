@@ -5,7 +5,7 @@
 use std::fs::File;
 use std::sync::Arc;
 
-use rpt::lens::{Lens, SingleLens};
+use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens, SingleLens};
 use rpt::*;
 
 fn main() -> color_eyre::Result<()> {
@@ -77,22 +77,29 @@ fn main() -> color_eyre::Result<()> {
     .iter()
     .enumerate()
     {
-        for aperture_i in 0..aperture_steps {
+        for aperture_i in (0..aperture_steps).rev() {
             let aperture = aperture_step_size * aperture_i as f64 + min_aperture;
             for dist_i in 0..distance_steps {
                 let dist = distance_step_size * dist_i as f64 + min_distance;
                 let filename = format!(
-                    "rustacean_singlelens_shape{}_aperture{}_dist{}.png",
+                    "rustacean_achromatic_shape{}_aperture{}_dist{}.png",
                     shape_i, aperture_i, dist_i
                 );
                 println!("Rendering {filename}");
-                let lens = SingleLens {
+                // let lens = SingleLens {
+                //     aperture: Aperture {
+                //         scale: aperture,
+                //         shape: shape.clone(),
+                //     },
+                //     ..Default::default()
+                // };
+                let lens = AchromaticDoublet::new(AchromaticDoubletParams {
                     aperture: Aperture {
                         scale: aperture,
                         shape: shape.clone(),
                     },
                     ..Default::default()
-                };
+                });
                 let lens_system = lens.lens_system(10.);
                 let mut camera = PhysicalCamera {
                     eye: Default::default(),
