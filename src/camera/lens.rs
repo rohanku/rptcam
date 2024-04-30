@@ -189,7 +189,7 @@ pub struct AchromaticDoubletParams {
 impl Default for AchromaticDoublet {
     fn default() -> Self {
         Self::new(AchromaticDoubletParams {
-            v1: 64.17,
+            v1: 3.,
             v2: 1.,
             n1: 1.3,
             n2: 1.8,
@@ -213,11 +213,10 @@ impl AchromaticDoublet {
         let p1 = ptot / (1. - w1 / w2);
         let p2 = ptot - p1;
         let r2 = 1. / (p1 / (params.n1 - 1.) - 1. / params.r1);
-        let r3 = -1. / (p2 / (params.n2 - 1.) - 1. / r2);
+        let r3 = 1. / (-p2 / (params.n2 - 1.) - 1. / r2);
 
         assert!(params.r1 > 0.);
         assert!(r2 > 0.);
-        assert!(r3 > 0.);
 
         Self {
             v1: params.v1,
@@ -248,10 +247,6 @@ impl Lens for AchromaticDoublet {
     }
 
     fn lens_system(&self, object_distance: f64) -> LensSystem {
-        println!(
-            "dist = {object_distance}, r1 = {}, r2 = {}, r3 = {}, feq = {}",
-            self.r1, self.r2, self.r3, self.feq
-        );
         let object_distance = object_distance.max(4. * self.focal_length());
         let a = 1.;
         let b = -object_distance;
@@ -289,7 +284,7 @@ impl Lens for AchromaticDoublet {
                     v_no: self.v2,
                 },
                 LensSurface {
-                    radius: -self.r3,
+                    radius: self.r3,
                     thickness: image_distance - self.thickness,
                     aperture: self.aperture.clone(),
                     n_d: None,
