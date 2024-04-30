@@ -78,7 +78,7 @@ fn main() -> color_eyre::Result<()> {
     ));
      */
 
-    Renderer::new(&scene, Arc::new(ThinLensCamera::default()))
+    Renderer::new(&scene, Arc::new(PinholeCamera::default()))
         .width(800)
         .height(600)
         .max_bounces(1)

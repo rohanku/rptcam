@@ -1,9 +1,8 @@
 //! This is an example that demonstrates bokeh.
 
 use std::sync::Arc;
-use std::time::Instant;
 
-use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens, SingleLens};
+use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens};
 use rpt::*;
 
 fn main() -> color_eyre::Result<()> {

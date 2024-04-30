@@ -5,7 +5,7 @@
 use std::fs::File;
 use std::sync::Arc;
 
-use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens, SingleLens};
+use rpt::lens::{AchromaticDoublet, AchromaticDoubletParams, Lens};
 use rpt::*;
 
 fn main() -> color_eyre::Result<()> {

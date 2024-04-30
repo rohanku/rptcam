@@ -175,16 +175,26 @@ pub struct AchromaticDoublet {
 }
 
 /// Parameters for an achromatic doublet.
+///
+/// Lens 1: positive (convex, high vno, low n).
+/// Lens 2: negative (concave, low vno, high n),
 #[derive(Clone, Debug)]
 pub struct AchromaticDoubletParams {
-    ///
+    /// Vno of the first lens
     pub v1: f64,
+    /// Vno of the second lens
     pub v2: f64,
+    /// Refractive index of the first lens.
     pub n1: f64,
+    /// Refractive index of the second lens.
     pub n2: f64,
+    /// Equivalent focal length
     pub feq: f64,
+    /// Lens thickness
     pub thickness: f64,
+    /// Aperture
     pub aperture: Aperture,
+    /// Radius of first lens's outer surface
     pub r1: f64,
 }
 

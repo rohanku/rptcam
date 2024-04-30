@@ -19,7 +19,7 @@ pub trait Camera: Send + Sync {
 
 /// A simple thin-lens perspective camera
 #[derive(Clone, Debug)]
-pub struct ThinLensCamera {
+pub struct PinholeCamera {
     /// Location of the camera
     pub eye: glm::DVec3,
 
@@ -72,7 +72,7 @@ pub struct Polygon {
     pts: Vec<[f64; 2]>,
 }
 
-impl Default for ThinLensCamera {
+impl Default for PinholeCamera {
     fn default() -> Self {
         Self {
             eye: glm::vec3(0.0, 0.0, 10.0),
@@ -85,7 +85,7 @@ impl Default for ThinLensCamera {
     }
 }
 
-impl ThinLensCamera {
+impl PinholeCamera {
     /// Perspective camera looking at a point, with a given field of view
     pub fn look_at(eye: glm::DVec3, center: glm::DVec3, up: glm::DVec3, fov: f64) -> Self {
         let direction = (center - eye).normalize();
@@ -108,7 +108,7 @@ impl ThinLensCamera {
     }
 }
 
-impl Camera for ThinLensCamera {
+impl Camera for PinholeCamera {
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64) {
         // cot(f / 2) = depth / radius
         let d = (self.fov / 2.0).tan().recip();
