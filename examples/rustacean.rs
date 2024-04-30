@@ -56,13 +56,13 @@ fn main() -> color_eyre::Result<()> {
         .material(Material::light(glm::vec3(1.0, 1.0, 1.0), 160.0)),
     ));
 
-    let camera = ThinLensCamera::look_at(
+    let mut camera = ThinLensCamera::look_at(
         glm::vec3(-2.5, 4.0, 8.5),
         glm::vec3(0.0, 0.9, 0.0),
         glm::vec3(0.0, 1.0, 0.0),
         std::f64::consts::FRAC_PI_6,
     );
-    Renderer::new(&scene, Arc::new(camera))
+    Renderer::new(&scene, &mut camera)
         .width(800)
         .height(800)
         .max_bounces(4)

@@ -2,11 +2,12 @@ pub mod lens;
 
 use crate::camera::lens::{Lens, LensSystem};
 use crate::lens::IMAGING_MEDIUM_N_D;
-use crate::Color;
+use crate::{Color, Renderer, object};
 use glm::vec3;
+use image::RgbImage;
 use rand::distributions::Uniform;
 use rand::{rngs::StdRng, Rng};
-use rand_distr::{UnitDisc, UnitSphere};
+use rand_distr::{UnitDisc, UnitSphere, FisherF};
 
 use crate::shape::Ray;
 
@@ -14,6 +15,7 @@ use crate::shape::Ray;
 pub trait Camera: Send + Sync {
     /// Cast a ray, where (x, y) are normalized to the standard [-1, 1] box
     fn cast_ray(&self, x: f64, y: f64, rng: &mut StdRng) -> (Ray, Color, f64);
+    fn focus_new_object_distance(&mut self, object_distance: f64);
 }
 
 /// A simple thin-lens perspective camera
@@ -130,6 +132,9 @@ impl Camera for ThinLensCamera {
             1.,
         )
     }
+    fn focus_new_object_distance(&mut self, object_distance: f64) {
+        self.focal_distance = object_distance;
+    }
 }
 
 /// A physical camera
@@ -160,13 +165,13 @@ pub struct PhysicalCamera<L> {
 impl<L: Lens + Default> Default for PhysicalCamera<L> {
     fn default() -> Self {
         let lens = L::default();
-        let lens_system = lens.lens_system(11.);
+        let lens_system = lens.lens_system(12.);
         Self {
             eye: glm::vec3(0.0, -0.5, 14.0),
             direction: glm::vec3(0.0, 0.0, -1.0),
             up: glm::vec3(0.0, 1.0, 0.0), // we live in a y-up world...
-            sensor_width: 1.6,
-            sensor_height: 1.2,
+            sensor_width: 1.8,
+            sensor_height: 1.35,
             lens,
             lens_system,
         }
@@ -313,6 +318,11 @@ impl<L: Lens> Camera for PhysicalCamera<L> {
             }
         }
     }
+    fn focus_new_object_distance(&mut self, object_distance: f64) {
+        self.lens_system = self.lens.lens_system(object_distance);
+        return;
+    }
+
 }
 
 impl ApertureShape {

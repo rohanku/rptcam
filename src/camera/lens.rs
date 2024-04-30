@@ -79,7 +79,7 @@ impl Default for SingleLens {
                 scale: 0.035,
                 shape: ApertureShape::Circle,
             },
-            thickness: 0.01,
+            thickness: 0.005,
             n_d: 1.8,
             v_no: 1.,
         }

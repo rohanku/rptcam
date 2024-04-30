@@ -1,27 +1,29 @@
-use image::RgbImage;
+use image::{RgbImage, RgbaImage};
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
 use std::sync::Arc;
 
 use crate::buffer::{Buffer, Filter};
 use crate::color::Color;
+use crate::lens::SingleLens;
 use crate::light::Light;
 use crate::material::Material;
 use crate::object::Object;
 use crate::scene::Scene;
 use crate::shape::{HitRecord, Ray};
-use crate::Camera;
+use crate::{Camera, PhysicalCamera};
 
 const EPSILON: f64 = 1e-12;
 const FIREFLY_CLAMP: f64 = 100.0;
 
 /// Builder object for rendering a scene
+// #[derive(Copy, Clone)]
 pub struct Renderer<'a> {
     /// The scene to be rendered
     pub scene: &'a Scene,
 
     /// The camera to use
-    pub camera: Arc<dyn Camera>,
+    pub camera: &'a mut dyn Camera,
 
     /// The width of the output image
     pub width: u32,
@@ -42,9 +44,32 @@ pub struct Renderer<'a> {
     pub num_samples: u32,
 }
 
+fn calculate_variance_with_counts(data: &[usize]) -> f64 {
+    let n = data.iter().sum::<usize>() as f64;
+    let mean: f64 = data.iter().enumerate().map(|(val, &count)| val as f64 * count as f64).sum::<f64>() / n;
+    let variance = data.iter().enumerate().map(|(val, &count)| {
+        let diff = val as f64 - mean;
+        diff * diff * count as f64
+    }).sum::<f64>() / (n - 1.0);
+    
+    variance
+}
+
+fn measure_contrast_var(image: RgbImage) -> f64 {
+    let mut array: [usize; 256] = [0; 256];
+    for x in 0..image.width() {
+        for y in 0..image.height() {
+            let pixel = image.get_pixel(x,y);
+            let brightness = (0.2126 * pixel[0] as f64 + 0.7152 * pixel[1] as f64 + 0.0722 * pixel[2] as f64) as usize;
+            array[brightness] += 1;
+        }
+    }
+    return calculate_variance_with_counts(&array);
+}
+
 impl<'a> Renderer<'a> {
     /// Construct a new renderer for a scene
-    pub fn new(scene: &'a Scene, camera: Arc<dyn Camera>) -> Self {
+    pub fn new(scene: &'a Scene, camera: &'a mut dyn Camera) -> Self {
         Self {
             scene,
             camera,
@@ -113,6 +138,40 @@ impl<'a> Renderer<'a> {
             iteration += steps;
             callback(iteration, &buffer);
         }
+    }
+
+    /// Given a scene and a camera lens configuration, iteratively find the best focal distance that maximizes contrast,
+    /// which is calculated as the highest brightness variance
+    pub fn autofocus(mut self) -> Self {
+        let threshold: f64 = 3.;
+        let mut distance = 30.0;
+        let mut step = 1.5;
+        self.num_samples =16;
+        self.width = 800;
+        self.height = 800;
+        self.camera.focus_new_object_distance(distance);
+        let image = self.render();
+        let mut curr_contrast = measure_contrast_var(image);
+        loop {
+            let new_distance = distance - step;
+            self.camera.focus_new_object_distance(new_distance);
+            let image = self.render();
+            let next_contrast = measure_contrast_var(image);
+            // let diff = curr_contrast - next_contrast;
+            println!("curr contrast = {d}", d=curr_contrast);
+            println!("next contrast = {d}", d=next_contrast);
+            if (curr_contrast - next_contrast).abs() <= threshold {
+                distance = new_distance;
+                break;
+            } else if next_contrast > curr_contrast {
+                curr_contrast = next_contrast;
+                distance = new_distance;
+            } else if curr_contrast > next_contrast{
+                step = -(step / 2.);
+            }
+            println!("new distance = {d}", d=distance);
+        }
+        self
     }
 
     fn sample(&self, iterations: u32, buffer: &mut Buffer) {
