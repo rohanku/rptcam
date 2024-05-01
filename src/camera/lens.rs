@@ -73,10 +73,10 @@ pub struct SingleLens {
 impl Default for SingleLens {
     fn default() -> Self {
         Self {
-            r1: 4.,
-            r2: 4.,
+            r1: 5.,
+            r2: 5.,
             aperture: Aperture {
-                scale: 0.035,
+                scale: 0.03,
                 shape: ApertureShape::Circle,
             },
             thickness: 0.005,

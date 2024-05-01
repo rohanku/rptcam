@@ -9,11 +9,11 @@ fn main() -> color_eyre::Result<()> {
 
     scene.add(Object::new(sphere().translate(&glm::vec3(0., 0., -4.0))));
 
-    // scene.add(Object::new(
-    //     sphere()
-    //         .scale(&glm::vec3(0.2, 0.2, 0.2))
-    //         .translate(&glm::vec3(0., -0.8, 6.0)),
-    // ));
+    scene.add(Object::new(
+        sphere()
+            .scale(&glm::vec3(0.2, 0.2, 0.2))
+            .translate(&glm::vec3(0., -0.8, 6.0)),
+    ));
     scene.add(
         Object::new(
             cube()

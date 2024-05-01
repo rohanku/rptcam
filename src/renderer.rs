@@ -143,12 +143,15 @@ impl<'a> Renderer<'a> {
     /// Given a scene and a camera lens configuration, iteratively find the best focal distance that maximizes contrast,
     /// which is calculated as the highest brightness variance
     pub fn autofocus(mut self) -> Self {
-        let threshold: f64 = 3.;
-        let mut distance = 30.0;
-        let mut step = 1.5;
-        self.num_samples =16;
+        // Setting small constants for the renderer to generate images with
+        self.num_samples = 16;
         self.width = 800;
         self.height = 800;
+        let threshold: f64 = 5.;
+        let mut distance = 25.0;
+        let mut step = 1.5;
+
+        // Renders base image to compare future iterations on
         self.camera.focus_new_object_distance(distance);
         let image = self.render();
         let mut curr_contrast = measure_contrast_var(image);
@@ -157,7 +160,6 @@ impl<'a> Renderer<'a> {
             self.camera.focus_new_object_distance(new_distance);
             let image = self.render();
             let next_contrast = measure_contrast_var(image);
-            // let diff = curr_contrast - next_contrast;
             println!("curr contrast = {d}", d=curr_contrast);
             println!("next contrast = {d}", d=next_contrast);
             if (curr_contrast - next_contrast).abs() <= threshold {

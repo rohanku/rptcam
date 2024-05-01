@@ -18,14 +18,15 @@ fn main() {
         .material(Material::light(hex_color(0xFFFFFF), 40.0)),
     ));
 
-    let camera = ThinLensCamera::look_at(
+    let mut camera = ThinLensCamera::look_at(
         glm::vec3(-2.5, 4.0, 6.5),
         glm::vec3(0.0, -0.25, 0.0),
         glm::vec3(0.0, 1.0, 0.0),
         std::f64::consts::FRAC_PI_4,
     );
 
-    Renderer::new(&scene, Arc::new(camera))
+    Renderer::new(&scene, &mut camera)
+        // .autofocus()
         .width(960)
         .height(540)
         .max_bounces(2)
